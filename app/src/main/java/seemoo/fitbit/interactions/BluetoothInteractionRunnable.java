@@ -53,7 +53,7 @@ class BluetoothInteractionRunnable implements Runnable {
         if (mBluetoothInteractionQueue.getFirstBluetoothInteraction() != null) {
             try {
                 if (mBluetoothInteractionQueue.getFirstBluetoothInteraction().getTimer() < 0) {
-                    if (mInteractionLock.tryAcquire(3000, TimeUnit.MILLISECONDS)) {
+                    if (mInteractionLock.tryAcquire(1000, TimeUnit.MILLISECONDS)) {
                         mInteractionLock.release();
                     } else {
                         Log.e(TAG, "Interaction queue is paused, until " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName() + "-timer is set to a positive value.");
@@ -80,8 +80,8 @@ class BluetoothInteractionRunnable implements Runnable {
                             @Override
                             public void run() {
                                 if (mBluetoothInteractionQueue.getFirstBluetoothInteraction() != null) {
-                                    //toast.setText("Error: Timeout of " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName().replaceFirst("Interaction", ""));
-                                    toast.setText("Error: Timeout FW-Update!");
+                                    toast.setText("Error: Timeout of " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName().replaceFirst("Interaction", ""));
+//                                    toast.setText("Error: Timeout FW-Update!");
                                 } else {
                                     toast.setText("Error: Timeout of last interaction");
                                 }

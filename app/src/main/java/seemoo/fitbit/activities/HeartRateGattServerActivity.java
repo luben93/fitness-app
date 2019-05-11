@@ -1,5 +1,4 @@
 package seemoo.fitbit.activities;
-
 /*
  * Copyright 2017, The Android Open Source Project
  *
@@ -16,8 +15,8 @@ package seemoo.fitbit.activities;
  * limitations under the License.
  */
 
+
 import android.app.Activity;
-import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -25,6 +24,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.AdvertiseCallback;
@@ -38,20 +38,22 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelUuid;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import seemoo.fitbit.R;
 
-public class GattServerActivity extends Activity {
-    private static final String TAG = GattServerActivity.class.getSimpleName();
+public class HeartRateGattServerActivity extends Activity {
+    private static final String TAG = HeartRateGattServerActivity.class.getSimpleName();
+    public static UUID HEART_RATE_SERVICE = UUID.fromString("00002A37-0000-1000-8000-80a2243c7058");
+    public static UUID HEART_RATE_CHARACTERISTIC = UUID.fromString("00002A37-0000-1000-8000-80a2243ca058");
+    public static UUID CLIENT_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     /* Local UI */
     private TextView mLocalTimeView;
@@ -67,7 +69,7 @@ public class GattServerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dump_info);
 
-        mLocalTimeView = (TextView) findViewById(R.id.tv_dumpinfo_steps);
+        Log.d(TAG, "onCreate: ");
 
         // Devices with a display should not go to sleep
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -78,7 +80,7 @@ public class GattServerActivity extends Activity {
         if (!checkBluetoothSupport(bluetoothAdapter)) {
             finish();
         }
-
+        Log.d(TAG, "onCreate: bluetooth supported");
         // Register for system Bluetooth events
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(mBluetoothReceiver, filter);
@@ -95,18 +97,20 @@ public class GattServerActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart: ");
         // Register for system clock events
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-        registerReceiver(mTimeReceiver, filter);
+//        registerReceiver(mTimeReceiver, filter);
+        notifyRegisteredDevices(new byte[] { (byte)0x01,0x01});
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(mTimeReceiver);
+//        unregisterReceiver(mTimeReceiver);
     }
 
     @Override
@@ -142,33 +146,7 @@ public class GattServerActivity extends Activity {
         return true;
     }
 
-    /**
-     * Listens for system time changes and triggers a notification to
-     * Bluetooth subscribers.
-     */
-    private BroadcastReceiver mTimeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive: time recived");
-            byte adjustReason;
-            switch (intent.getAction()) {
-                case Intent.ACTION_TIME_CHANGED:
-                    adjustReason = TimeProfile.ADJUST_MANUAL;
-                    break;
-                case Intent.ACTION_TIMEZONE_CHANGED:
-                    adjustReason = TimeProfile.ADJUST_TIMEZONE;
-                    break;
-                default:
-                case Intent.ACTION_TIME_TICK:
-                    adjustReason = TimeProfile.ADJUST_NONE;
-                    break;
-            }
-            long now = System.currentTimeMillis();
-            Log.d(TAG, "onReceive: time is: "+now);
-            notifyRegisteredDevices(now, adjustReason);
-            updateLocalUi(now);
-        }
-    };
+
 
     /**
      * Listens for Bluetooth adapter events to enable/disable
@@ -200,6 +178,7 @@ public class GattServerActivity extends Activity {
      * and supports the Current Time Service.
      */
     private void startAdvertising() {
+        Log.d(TAG, "startAdvertising: ");
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
         mBluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         if (mBluetoothLeAdvertiser == null) {
@@ -217,7 +196,7 @@ public class GattServerActivity extends Activity {
         AdvertiseData data = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
                 .setIncludeTxPowerLevel(false)
-                .addServiceUuid(new ParcelUuid(TimeProfile.TIME_SERVICE))
+                .addServiceUuid(new ParcelUuid(HEART_RATE_SERVICE))
                 .build();
 
         mBluetoothLeAdvertiser
@@ -238,16 +217,44 @@ public class GattServerActivity extends Activity {
      * from the Time Profile.
      */
     private void startServer() {
+        Log.d(TAG, "startServer: ");
         mBluetoothGattServer = mBluetoothManager.openGattServer(this, mGattServerCallback);
         if (mBluetoothGattServer == null) {
             Log.w(TAG, "Unable to create GATT server");
             return;
         }
 
-        mBluetoothGattServer.addService(TimeProfile.createTimeService());
+        mBluetoothGattServer.addService(createHeartRateService());
 
         // Initialize the local UI
-        updateLocalUi(System.currentTimeMillis());
+//        updateLocalUi(System.currentTimeMillis());
+    }
+
+    public static BluetoothGattService createHeartRateService() {
+        Log.d(TAG, "createHeartRateService: ");
+        BluetoothGattService service = new BluetoothGattService(HEART_RATE_SERVICE,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY);
+
+        // Current Time characteristic
+        BluetoothGattCharacteristic currentTime = new BluetoothGattCharacteristic(HEART_RATE_CHARACTERISTIC,
+                //Read-only characteristic, supports notifications
+                BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+                BluetoothGattCharacteristic.PERMISSION_READ);
+//        BluetoothGattDescriptor configDescriptor = new BluetoothGattDescriptor(CLIENT_CONFIG,
+//                //Read/write descriptor
+//                BluetoothGattDescriptor.PERMISSION_READ | BluetoothGattDescriptor.PERMISSION_WRITE);
+//        currentTime.addDescriptor(configDescriptor);
+
+        // Local Time Information characteristic
+//        BluetoothGattCharacteristic localTime = new BluetoothGattCharacteristic(LOCAL_TIME_INFO,
+//                //Read-only characteristic
+//                BluetoothGattCharacteristic.PROPERTY_READ,
+//                BluetoothGattCharacteristic.PERMISSION_READ);
+
+        service.addCharacteristic(currentTime);
+//        service.addCharacteristic(localTime);
+
+        return service;
     }
 
     /**
@@ -278,33 +285,24 @@ public class GattServerActivity extends Activity {
      * Send a time service notification to any devices that are subscribed
      * to the characteristic.
      */
-    private void notifyRegisteredDevices(long timestamp, byte adjustReason) {
+    private void notifyRegisteredDevices(byte[] heartrate) {
         if (mRegisteredDevices.isEmpty()) {
             Log.i(TAG, "No subscribers registered");
             return;
         }
-        byte[] exactTime = TimeProfile.getExactTime(timestamp, adjustReason);
+//        byte[] exactTime = TimeProfile.getExactTime(timestamp, adjustReason);
 
         Log.i(TAG, "Sending update to " + mRegisteredDevices.size() + " subscribers");
         for (BluetoothDevice device : mRegisteredDevices) {
             BluetoothGattCharacteristic timeCharacteristic = mBluetoothGattServer
-                    .getService(TimeProfile.TIME_SERVICE)
-                    .getCharacteristic(TimeProfile.CURRENT_TIME);
-            timeCharacteristic.setValue(exactTime);
+                    .getService(HEART_RATE_SERVICE)
+                    .getCharacteristic(HEART_RATE_CHARACTERISTIC);
+            timeCharacteristic.setValue(heartrate);
             mBluetoothGattServer.notifyCharacteristicChanged(device, timeCharacteristic, false);
         }
     }
 
-    /**
-     * Update graphical UI on devices that support it with the current time.
-     */
-    private void updateLocalUi(long timestamp) {
-        Date date = new Date(timestamp);
-        String displayDate = DateFormat.getMediumDateFormat(this).format(date)
-                + "\n"
-                + DateFormat.getTimeFormat(this).format(date);
-        mLocalTimeView.setText(displayDate);
-    }
+
 
     /**
      * Callback to handle incoming requests to the GATT server.
@@ -327,21 +325,21 @@ public class GattServerActivity extends Activity {
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
                                                 BluetoothGattCharacteristic characteristic) {
             long now = System.currentTimeMillis();
-            if (TimeProfile.CURRENT_TIME.equals(characteristic.getUuid())) {
-                Log.i(TAG, "Read CurrentTime");
-                mBluetoothGattServer.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        TimeProfile.getExactTime(now, TimeProfile.ADJUST_NONE));
-            } else if (TimeProfile.LOCAL_TIME_INFO.equals(characteristic.getUuid())) {
-                Log.i(TAG, "Read LocalTimeInfo");
-                mBluetoothGattServer.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        TimeProfile.getLocalTimeInfo(now));
-            } else {
+//            if (TimeProfile.CURRENT_TIME.equals(characteristic.getUuid())) {
+//                Log.i(TAG, "Read CurrentTime");
+//                mBluetoothGattServer.sendResponse(device,
+//                        requestId,
+//                        BluetoothGatt.GATT_SUCCESS,
+//                        0,
+//                        TimeProfile.getExactTime(now, TimeProfile.ADJUST_NONE));
+//            } else if (TimeProfile.LOCAL_TIME_INFO.equals(characteristic.getUuid())) {
+//                Log.i(TAG, "Read LocalTimeInfo");
+//                mBluetoothGattServer.sendResponse(device,
+//                        requestId,
+//                        BluetoothGatt.GATT_SUCCESS,
+//                        0,
+//                        TimeProfile.getLocalTimeInfo(now));
+//            } else {
                 // Invalid characteristic
                 Log.w(TAG, "Invalid Characteristic Read: " + characteristic.getUuid());
                 mBluetoothGattServer.sendResponse(device,
@@ -349,13 +347,13 @@ public class GattServerActivity extends Activity {
                         BluetoothGatt.GATT_FAILURE,
                         0,
                         null);
-            }
+//            }
         }
 
         @Override
         public void onDescriptorReadRequest(BluetoothDevice device, int requestId, int offset,
                                             BluetoothGattDescriptor descriptor) {
-            if (TimeProfile.CLIENT_CONFIG.equals(descriptor.getUuid())) {
+            if (CLIENT_CONFIG.equals(descriptor.getUuid())) {
                 Log.d(TAG, "Config descriptor read");
                 byte[] returnValue;
                 if (mRegisteredDevices.contains(device)) {
@@ -383,7 +381,7 @@ public class GattServerActivity extends Activity {
                                              BluetoothGattDescriptor descriptor,
                                              boolean preparedWrite, boolean responseNeeded,
                                              int offset, byte[] value) {
-            if (TimeProfile.CLIENT_CONFIG.equals(descriptor.getUuid())) {
+            if (CLIENT_CONFIG.equals(descriptor.getUuid())) {
                 if (Arrays.equals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, value)) {
                     Log.d(TAG, "Subscribe device to notifications: " + device);
                     mRegisteredDevices.add(device);

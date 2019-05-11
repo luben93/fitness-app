@@ -76,13 +76,15 @@ public class Interactions {
      * @return The interact result of the first instruction in queue. Null if there is no first instruction.
      */
     public InformationList interact(byte[] value) {
-        if (mBluetoothInteractionQueue.getFirstBluetoothInteraction() != null) {
+        BluetoothInteraction interaction = mBluetoothInteractionQueue.getFirstBluetoothInteraction();
+        Log.d(TAG, "interact: "+interaction);
+        if (interaction != null) {
             try {
                 Thread.sleep(5);
             } catch (InterruptedException e) {
 
             }
-            return mBluetoothInteractionQueue.getFirstBluetoothInteraction().interact(value);
+            return interaction.interact(value);
         } else {
             return null;
         }
@@ -345,6 +347,7 @@ public class Interactions {
      */
     public void intLiveModeEnable() {
         mBluetoothInteractionQueue.addInteraction(new LiveModeInteraction(commands, this, 1));
+        mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
 
         setAccelReadoutActive(commands.isLiveModeAccelReadout());

@@ -460,6 +460,13 @@ public class MainFragment extends Fragment {
             }
         });
         saveButton.setVisibility(View.GONE);
+        FloatingActionButton updateButton = (FloatingActionButton) rootView.findViewById(R.id.fragment_main_update_live_view);
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                liveModeFavButton(v);
+            }
+        });
         InfoArrayAdapter arrayAdapter = new InfoArrayAdapter(getActivity(), informationToDisplay.getList());
         mListView = (ListView) rootView.findViewById(R.id.WorkActivityList);
         mListView.setAdapter(arrayAdapter);
@@ -702,6 +709,17 @@ public class MainFragment extends Fragment {
             interactions.intLiveModeEnable();
             graph.setVisibility(View.GONE);
         }
+    }
+
+    public void liveModeFavButton(View v){
+        Log.d(TAG, "liveModeFavButton: ");
+        interactions.liveModeActive();
+        interactions.intAuthentication();
+        interactions.intLiveModeEnable();
+        saveButton(v);
+//        graph.setVisibility(View.VISIBLE);
+
+//        interactions.intLiveModeDisable();
     }
 
     public boolean isLiveModeActive() {

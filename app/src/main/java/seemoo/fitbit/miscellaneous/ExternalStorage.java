@@ -102,9 +102,11 @@ public class ExternalStorage {
      * @param name The name of the list.
      * @param activity The current activity.
      */
-    public static void saveInformationList(InformationList list, String name, Activity activity){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US);
-        saveString(list.getBeautyData(), name + "_" + dateFormat.format(new Date()), activity);
+    public static void saveInformationList(InformationList list, String name, Activity activity) {
+        if (list != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US);
+            saveString(list.getBeautyData(), name + "_" + dateFormat.format(new Date()), activity);
+        }
     }
 
     /**

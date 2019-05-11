@@ -334,6 +334,8 @@ public class Utilities {
 
     public static BarGraphSeries updateGraph(byte[] value) {
         String data = Utilities.byteArrayToHexString(value);
+//        Log.d(TAG, "updateGraph: "+data);
+        if(data.length() < 16) return null;
         Long xAxis = Long.parseLong(Utilities.rotateBytes(data.substring(0, 4)), 16);
         Long yAxis = Long.parseLong(Utilities.rotateBytes(data.substring(6, 10)), 16);
         Long zAxis = Long.parseLong(Utilities.rotateBytes(data.substring(12, 16)), 16);
