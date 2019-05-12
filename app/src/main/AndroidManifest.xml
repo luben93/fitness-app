@@ -32,11 +32,12 @@
         <activity
             android:name="seemoo.fitbit.activities.MainActivity"
             android:screenOrientation="portrait">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
         </activity>
         <activity
             android:name="seemoo.fitbit.activities.WorkActivity"
@@ -53,11 +54,12 @@
             android:screenOrientation="portrait"
             android:label="broadcaster"
             android:parentActivityName="seemoo.fitbit.activities.MainActivity">
+
         <!--<intent-filter>-->
             <!--<action android:name="android.intent.action.MAIN"/>-->
-
             <!--<category android:name="android.intent.category.LAUNCHER"/>-->
         <!--</intent-filter>-->
+
         </activity>
 
 </application>

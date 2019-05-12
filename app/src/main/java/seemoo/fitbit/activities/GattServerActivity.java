@@ -291,6 +291,7 @@ public class GattServerActivity extends Activity {
                     .getService(TimeProfile.TIME_SERVICE)
                     .getCharacteristic(TimeProfile.CURRENT_TIME);
             timeCharacteristic.setValue(exactTime);
+            Log.d(TAG, "notifyRegisteredDevices: "+device.getName() + " "+ device.getAddress());
             mBluetoothGattServer.notifyCharacteristicChanged(device, timeCharacteristic, false);
         }
     }
