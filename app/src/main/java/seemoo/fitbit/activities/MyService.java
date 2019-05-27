@@ -1,50 +1,29 @@
 package seemoo.fitbit.activities;
 
-import android.app.Activity;
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.text.format.DateFormat;
+import android.os.IBinder;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import static org.spongycastle.crypto.tls.ConnectionEnd.server;
 
-import seemoo.fitbit.R;
-
-public class GattActivity extends Activity {
-    private static final String TAG = GattActivity.class.getSimpleName();
-
-    /* Local UI */
-    private TextView mLocalTimeView;
-    /* Bluetooth API */
+public class MyService extends Service {
     private BluetoothManager mBluetoothManager;
-
+    private static final String TAG = MyService.class.getSimpleName();
     private GattServer server;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dump_info);
-
-        mLocalTimeView = (TextView) findViewById(R.id.tv_dumpinfo_steps);
-
-        // Devices with a display should not go to sleep
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
+    public void onCreate() {
         mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
         // We can't continue without proper Bluetooth support
         if (!checkBluetoothSupport(bluetoothAdapter)) {
-            finish();
+            return;
         }
 
         // Register for system Bluetooth events
@@ -52,7 +31,7 @@ public class GattActivity extends Activity {
         server = new GattServer(new GattServer.Callback() {
             @Override
             public void update(long timestamp) {
-                updateLocalUi(timestamp);
+                Log.d(TAG, "update: "+timestamp);
             }
         },mBluetoothManager,this);
         registerReceiver(server.mBluetoothReceiver, filter);
@@ -66,33 +45,20 @@ public class GattActivity extends Activity {
             server.startServer();
         }
     }
-    /**
-     * Update graphical UI on devices that support it with the current time.
-     */
-    private void updateLocalUi(long timestamp) {
-
-    }
-
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        // Register for system clock events
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(server.mTimeReceiver, filter);
+        return START_STICKY;
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        unregisterReceiver(server.mTimeReceiver);
-    }
-
-    @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
 
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
@@ -100,6 +66,7 @@ public class GattActivity extends Activity {
             server.stopServer();
             server.stopAdvertising();
         }
+        unregisterReceiver(server.mTimeReceiver);
 
         unregisterReceiver(server.mBluetoothReceiver);
     }
@@ -124,5 +91,9 @@ public class GattActivity extends Activity {
 
         return true;
     }
-
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        return null;
+    }
 }
