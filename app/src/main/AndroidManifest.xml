@@ -33,10 +33,10 @@
             android:name="seemoo.fitbit.activities.MainActivity"
             android:screenOrientation="portrait">
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN"/>-->
+                <!--<category android:name="android.intent.category.LAUNCHER"/>-->
+            <!--</intent-filter>-->
 
         </activity>
         <activity
@@ -50,15 +50,15 @@
             android:label="Scanning for devices..."
             android:parentActivityName="seemoo.fitbit.activities.MainActivity"
             android:screenOrientation="portrait"/>
-        <activity android:name=".activities.GattServerActivity"
+        <activity android:name=".activities.GattActivity"
             android:screenOrientation="portrait"
             android:label="broadcaster"
             android:parentActivityName="seemoo.fitbit.activities.MainActivity">
 
-        <!--<intent-filter>-->
-            <!--<action android:name="android.intent.action.MAIN"/>-->
-            <!--<category android:name="android.intent.category.LAUNCHER"/>-->
-        <!--</intent-filter>-->
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN"/>
+            <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
 
         </activity>
 

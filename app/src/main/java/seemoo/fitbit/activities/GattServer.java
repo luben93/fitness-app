@@ -16,8 +16,6 @@ package seemoo.fitbit.activities;
  * limitations under the License.
  */
 
-import android.app.Activity;
-import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -34,119 +32,43 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.os.ParcelUuid;
-import android.text.format.DateFormat;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.TextView;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import seemoo.fitbit.R;
+public class GattServer  {
+    private static final String TAG = GattServer.class.getSimpleName();
 
-public class GattServerActivity extends Activity {
-    private static final String TAG = GattServerActivity.class.getSimpleName();
 
-    /* Local UI */
-    private TextView mLocalTimeView;
     /* Bluetooth API */
     private BluetoothManager mBluetoothManager;
     private BluetoothGattServer mBluetoothGattServer;
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     /* Collection of notification subscribers */
     private Set<BluetoothDevice> mRegisteredDevices = new HashSet<>();
+    private Callback callback;
+    private Context context;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dump_info);
 
-        mLocalTimeView = (TextView) findViewById(R.id.tv_dumpinfo_steps);
-
-        // Devices with a display should not go to sleep
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
-        // We can't continue without proper Bluetooth support
-        if (!checkBluetoothSupport(bluetoothAdapter)) {
-            finish();
-        }
-
-        // Register for system Bluetooth events
-        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mBluetoothReceiver, filter);
-        if (!bluetoothAdapter.isEnabled()) {
-            Log.d(TAG, "Bluetooth is currently disabled...enabling");
-            bluetoothAdapter.enable();
-        } else {
-            Log.d(TAG, "Bluetooth enabled...starting services");
-            startAdvertising();
-            startServer();
-        }
+    public GattServer(Callback callback,BluetoothManager bluetoothManager,Context context){
+        this.callback = callback;
+        this.mBluetoothManager = bluetoothManager;
+        this.context = context;
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // Register for system clock events
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_TIME_TICK);
-        filter.addAction(Intent.ACTION_TIME_CHANGED);
-        filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-        registerReceiver(mTimeReceiver, filter);
+    interface Callback {
+        void update(long timestamp);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unregisterReceiver(mTimeReceiver);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
-        if (bluetoothAdapter.isEnabled()) {
-            stopServer();
-            stopAdvertising();
-        }
-
-        unregisterReceiver(mBluetoothReceiver);
-    }
-
-    /**
-     * Verify the level of Bluetooth support provided by the hardware.
-     * @param bluetoothAdapter System {@link BluetoothAdapter}.
-     * @return true if Bluetooth is properly supported, false otherwise.
-     */
-    private boolean checkBluetoothSupport(BluetoothAdapter bluetoothAdapter) {
-
-        if (bluetoothAdapter == null) {
-            Log.w(TAG, "Bluetooth is not supported");
-            return false;
-        }
-
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Log.w(TAG, "Bluetooth LE is not supported");
-            return false;
-        }
-
-        return true;
-    }
 
     /**
      * Listens for system time changes and triggers a notification to
      * Bluetooth subscribers.
      */
-    private BroadcastReceiver mTimeReceiver = new BroadcastReceiver() {
+    public BroadcastReceiver mTimeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: time recived");
@@ -174,7 +96,7 @@ public class GattServerActivity extends Activity {
      * Listens for Bluetooth adapter events to enable/disable
      * advertising and server functionality.
      */
-    private BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
+    public BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF);
@@ -199,7 +121,7 @@ public class GattServerActivity extends Activity {
      * Begin advertising over Bluetooth that this device is connectable
      * and supports the Current Time Service.
      */
-    private void startAdvertising() {
+    public void startAdvertising() {
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
         mBluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         if (mBluetoothLeAdvertiser == null) {
@@ -227,7 +149,7 @@ public class GattServerActivity extends Activity {
     /**
      * Stop Bluetooth advertisements.
      */
-    private void stopAdvertising() {
+    public void stopAdvertising() {
         if (mBluetoothLeAdvertiser == null) return;
 
         mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
@@ -237,8 +159,8 @@ public class GattServerActivity extends Activity {
      * Initialize the GATT server instance with the services/characteristics
      * from the Time Profile.
      */
-    private void startServer() {
-        mBluetoothGattServer = mBluetoothManager.openGattServer(this, mGattServerCallback);
+    public void startServer() {
+        mBluetoothGattServer = mBluetoothManager.openGattServer(context, mGattServerCallback);
         if (mBluetoothGattServer == null) {
             Log.w(TAG, "Unable to create GATT server");
             return;
@@ -253,7 +175,7 @@ public class GattServerActivity extends Activity {
     /**
      * Shut down the GATT server.
      */
-    private void stopServer() {
+    public void stopServer() {
         if (mBluetoothGattServer == null) return;
 
         mBluetoothGattServer.close();
@@ -300,11 +222,7 @@ public class GattServerActivity extends Activity {
      * Update graphical UI on devices that support it with the current time.
      */
     private void updateLocalUi(long timestamp) {
-        Date date = new Date(timestamp);
-        String displayDate = DateFormat.getMediumDateFormat(this).format(date)
-                + "\n"
-                + DateFormat.getTimeFormat(this).format(date);
-        mLocalTimeView.setText(displayDate);
+        callback.update(timestamp);
     }
 
     /**
