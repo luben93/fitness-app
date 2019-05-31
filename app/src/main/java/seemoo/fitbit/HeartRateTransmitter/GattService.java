@@ -14,7 +14,7 @@ public class GattService extends Service {
     private BluetoothManager mBluetoothManager;
     private static final String TAG = GattService.class.getSimpleName();
     private GattServer server;
-
+    private boolean running ;
     @Override
     public void onCreate() {
         mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
@@ -51,7 +51,25 @@ public class GattService extends Service {
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
-        registerReceiver(server.mTimeReceiver, filter);
+        running = true;
+//        registerReceiver(server.mTimeReceiver, filter);
+        Thread t = new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                while (running){
+                    try {
+                        Log.d(TAG, "run: loop");
+                        server.notifyRegisteredDevices(45,(byte)0);
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        t.start();
         return START_STICKY;
     }
 
@@ -64,8 +82,8 @@ public class GattService extends Service {
             server.stopServer();
             server.stopAdvertising();
         }
-        unregisterReceiver(server.mTimeReceiver);
-
+//        unregisterReceiver(server.mTimeReceiver);
+        running = false;
         unregisterReceiver(server.mBluetoothReceiver);
     }
 

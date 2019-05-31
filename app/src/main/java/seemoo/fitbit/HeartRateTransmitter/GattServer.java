@@ -88,7 +88,7 @@ public class GattServer  {
             }
             long now = System.currentTimeMillis();
             Log.d(TAG, "onReceive: time is: "+now);
-            notifyRegisteredDevices(now, adjustReason);
+            notifyRegisteredDevices(currentHeartrate, adjustReason);
             updateLocalUi(now);
         }
     };
@@ -202,12 +202,12 @@ public class GattServer  {
      * Send a time service notification to any devices that are subscribed
      * to the characteristic.
      */
-    private void notifyRegisteredDevices(long timestamp, byte adjustReason) {
+    public void notifyRegisteredDevices(int timestamp, byte adjustReason) {
         if (mRegisteredDevices.isEmpty()) {
             Log.i(TAG, "No subscribers registered");
             return;
         }
-        byte[] exactTime = TimeProfile.getExactTime(currentHeartrate, adjustReason);
+        byte[] exactTime = TimeProfile.getExactTime(timestamp, adjustReason);
 
         Log.i(TAG, "Sending update to " + mRegisteredDevices.size() + " subscribers");
         for (BluetoothDevice device : mRegisteredDevices) {

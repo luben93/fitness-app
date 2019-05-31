@@ -116,7 +116,9 @@ public class TimeProfile {
         byte[] mesurment = ByteBuffer.allocate(8).putInt(timestamp).array();
         byte[] all = Arrays.concatenate(flags,mesurment);
         Log.d(TAG, "getExactTime: "+all);
-        return all;
+        byte[] manual = new byte[2];
+        manual[1]= 0x41;
+        return manual;
 
     }
 
