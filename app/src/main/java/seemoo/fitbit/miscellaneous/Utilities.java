@@ -250,7 +250,8 @@ public class Utilities {
                 //heart rate only available on some trackers, even the original app just solves this with if statement...
                 if (data.length() > 32) {
                     list.add(new Information("very active minutes: " + Utilities.hexStringToInt(Utilities.rotateBytes(data.substring(32, 36)))));
-                    list.add(new Information("heartRate: " + Utilities.hexStringToInt(Utilities.rotateBytes(data.substring(36, 38)))));
+                    int heartRate =  Utilities.hexStringToInt(Utilities.rotateBytes(data.substring(36, 38)));
+                    list.add(new Information("heartRate: " +heartRate));
                     list.add(new Information("heartRateConfidence: " + Utilities.hexStringToInt(Utilities.rotateBytes(data.substring(38, 40)))));
                 }
             } catch (Exception e) {

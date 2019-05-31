@@ -69,7 +69,7 @@ public class GattService extends Service {
             }
         };
 
-        t.start();
+//        t.start();
         return START_STICKY;
     }
 
