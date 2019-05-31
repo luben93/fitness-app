@@ -1,4 +1,4 @@
-package seemoo.fitbit.activities;
+package seemoo.fitbit.HeartRateTransmitter;
 
 /*
  * Copyright 2017, The Android Open Source Project
@@ -51,6 +51,7 @@ public class GattServer  {
     private Set<BluetoothDevice> mRegisteredDevices = new HashSet<>();
     private Callback callback;
     private Context context;
+    private int currentHeartrate = 65;
 
 
     public GattServer(Callback callback,BluetoothManager bluetoothManager,Context context){
@@ -139,7 +140,7 @@ public class GattServer  {
         AdvertiseData data = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
                 .setIncludeTxPowerLevel(false)
-                .addServiceUuid(new ParcelUuid(TimeProfile.TIME_SERVICE))
+                .addServiceUuid(new ParcelUuid(TimeProfile.HEARTRATE_SERVICE))
                 .build();
 
         mBluetoothLeAdvertiser
@@ -160,6 +161,7 @@ public class GattServer  {
      * from the Time Profile.
      */
     public void startServer() {
+        Log.d(TAG, "startServer: address " +mBluetoothManager.getAdapter().getAddress());
         mBluetoothGattServer = mBluetoothManager.openGattServer(context, mGattServerCallback);
         if (mBluetoothGattServer == null) {
             Log.w(TAG, "Unable to create GATT server");
@@ -205,13 +207,13 @@ public class GattServer  {
             Log.i(TAG, "No subscribers registered");
             return;
         }
-        byte[] exactTime = TimeProfile.getExactTime(timestamp, adjustReason);
+        byte[] exactTime = TimeProfile.getExactTime(currentHeartrate, adjustReason);
 
         Log.i(TAG, "Sending update to " + mRegisteredDevices.size() + " subscribers");
         for (BluetoothDevice device : mRegisteredDevices) {
             BluetoothGattCharacteristic timeCharacteristic = mBluetoothGattServer
-                    .getService(TimeProfile.TIME_SERVICE)
-                    .getCharacteristic(TimeProfile.CURRENT_TIME);
+                    .getService(TimeProfile.HEARTRATE_SERVICE)
+                    .getCharacteristic(TimeProfile.HEART_RATE_MEASUREMENT);
             timeCharacteristic.setValue(exactTime);
             Log.d(TAG, "notifyRegisteredDevices: "+device.getName() + " "+ device.getAddress());
             mBluetoothGattServer.notifyCharacteristicChanged(device, timeCharacteristic, false);
@@ -246,20 +248,20 @@ public class GattServer  {
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
                                                 BluetoothGattCharacteristic characteristic) {
             long now = System.currentTimeMillis();
-            if (TimeProfile.CURRENT_TIME.equals(characteristic.getUuid())) {
-                Log.i(TAG, "Read CurrentTime");
+            if (TimeProfile.HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+                Log.i(TAG, "Read heartrate");
                 mBluetoothGattServer.sendResponse(device,
                         requestId,
                         BluetoothGatt.GATT_SUCCESS,
                         0,
-                        TimeProfile.getExactTime(now, TimeProfile.ADJUST_NONE));
-            } else if (TimeProfile.LOCAL_TIME_INFO.equals(characteristic.getUuid())) {
-                Log.i(TAG, "Read LocalTimeInfo");
-                mBluetoothGattServer.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        TimeProfile.getLocalTimeInfo(now));
+                        TimeProfile.getExactTime(currentHeartrate, TimeProfile.ADJUST_NONE));
+//            } else if (TimeProfile.LOCAL_TIME_INFO.equals(characteristic.getUuid())) {
+//                Log.i(TAG, "Read LocalTimeInfo");
+//                mBluetoothGattServer.sendResponse(device,
+//                        requestId,
+//                        BluetoothGatt.GATT_SUCCESS,
+//                        0,
+//                        TimeProfile.getLocalTimeInfo(now));
             } else {
                 // Invalid characteristic
                 Log.w(TAG, "Invalid Characteristic Read: " + characteristic.getUuid());

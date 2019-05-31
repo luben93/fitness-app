@@ -1,4 +1,4 @@
-package seemoo.fitbit.activities;
+package seemoo.fitbit.HeartRateTransmitter;
 
 /*
  * Copyright 2017, The Android Open Source Project
@@ -20,7 +20,11 @@ package seemoo.fitbit.activities;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.util.Log;
 
+import org.spongycastle.util.Arrays;
+
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.UUID;
 
@@ -32,11 +36,11 @@ public class TimeProfile {
     private static final String TAG = TimeProfile.class.getSimpleName();
 
     /* Current Time Service UUID */
-    public static UUID TIME_SERVICE = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
+    public static UUID HEARTRATE_SERVICE = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
     /* Mandatory Current Time Information Characteristic */
-    public static UUID CURRENT_TIME    = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
+    public static UUID HEART_RATE_MEASUREMENT = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
     /* Optional Local Time Information Characteristic */
-    public static UUID LOCAL_TIME_INFO = UUID.fromString("00002a0f-0000-1000-8000-00805f9b34fb");
+//    public static UUID LOCAL_TIME_INFO = UUID.fromString("00002a0f-0000-1000-8000-00805f9b34fb");
     /* Mandatory Client Characteristic Config Descriptor */
     public static UUID CLIENT_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
@@ -52,11 +56,11 @@ public class TimeProfile {
      * Current Time Service.
      */
     public static BluetoothGattService createTimeService() {
-        BluetoothGattService service = new BluetoothGattService(TIME_SERVICE,
+        BluetoothGattService service = new BluetoothGattService(HEARTRATE_SERVICE,
                 BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
         // Current Time characteristic
-        BluetoothGattCharacteristic heartRate = new BluetoothGattCharacteristic(CURRENT_TIME,
+        BluetoothGattCharacteristic heartRate = new BluetoothGattCharacteristic(HEART_RATE_MEASUREMENT,
                 //Read-only characteristic, supports notifications
                 BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
                 BluetoothGattCharacteristic.PERMISSION_READ);
@@ -66,13 +70,13 @@ public class TimeProfile {
         heartRate.addDescriptor(configDescriptor);
 
         // Local Time Information characteristic
-        BluetoothGattCharacteristic localTime = new BluetoothGattCharacteristic(LOCAL_TIME_INFO,
-                //Read-only characteristic
-                BluetoothGattCharacteristic.PROPERTY_READ,
-                BluetoothGattCharacteristic.PERMISSION_READ);
+//        BluetoothGattCharacteristic localTime = new BluetoothGattCharacteristic(LOCAL_TIME_INFO,
+//                //Read-only characteristic
+//                BluetoothGattCharacteristic.PROPERTY_READ,
+//                BluetoothGattCharacteristic.PERMISSION_READ);
 
         service.addCharacteristic(heartRate);
-        service.addCharacteristic(localTime);
+//        service.addCharacteristic(localTime);
 
         return service;
     }
@@ -81,34 +85,39 @@ public class TimeProfile {
      * Construct the field values for a Current Time characteristic
      * from the given epoch timestamp and adjustment reason.
      */
-    public static byte[] getExactTime(long timestamp, byte adjustReason) {
-        Calendar time = Calendar.getInstance();
-        time.setTimeInMillis(timestamp);
+    public static byte[] getExactTime(int timestamp, byte adjustReason) {
+//        Calendar time = Calendar.getInstance();
+//        time.setTimeInMillis(timestamp);
 
-        byte[] field = new byte[10];
+//        byte[] field = new byte[10];
 
-        // Year
-        int year = time.get(Calendar.YEAR);
-        field[0] = (byte) (year & 0xFF);
-        field[1] = (byte) ((year >> 8) & 0xFF);
-        // Month
-        field[2] = (byte) (time.get(Calendar.MONTH) + 1);
-        // Day
-        field[3] = (byte) time.get(Calendar.DATE);
-        // Hours
-        field[4] = (byte) time.get(Calendar.HOUR_OF_DAY);
-        // Minutes
-        field[5] = (byte) time.get(Calendar.MINUTE);
-        // Seconds
-        field[6] = (byte) time.get(Calendar.SECOND);
-        // Day of Week (1-7)
-        field[7] = getDayOfWeekCode(time.get(Calendar.DAY_OF_WEEK));
-        // Fractions256
-        field[8] = (byte) (time.get(Calendar.MILLISECOND) / 256);
+//        // Year
+//        int year = time.get(Calendar.YEAR);
+//        field[0] = (byte) (year & 0xFF);
+//        field[1] = (byte) ((year >> 8) & 0xFF);
+//        // Month
+//        field[2] = (byte) (time.get(Calendar.MONTH) + 1);
+//        // Day
+//        field[3] = (byte) time.get(Calendar.DATE);
+//        // Hours
+//        field[4] = (byte) time.get(Calendar.HOUR_OF_DAY);
+//        // Minutes
+//        field[5] = (byte) time.get(Calendar.MINUTE);
+//        // Seconds
+//        field[6] = (byte) time.get(Calendar.SECOND);
+//        // Day of Week (1-7)
+//        field[7] = getDayOfWeekCode(time.get(Calendar.DAY_OF_WEEK));
+//        // Fractions256
+//        field[8] = (byte) (time.get(Calendar.MILLISECOND) / 256);
+//
+//        field[9] = adjustReason;
 
-        field[9] = adjustReason;
+        byte[] flags = new byte[6];
+        byte[] mesurment = ByteBuffer.allocate(8).putInt(timestamp).array();
+        byte[] all = Arrays.concatenate(flags,mesurment);
+        Log.d(TAG, "getExactTime: "+all);
+        return all;
 
-        return field;
     }
 
     /* Time bucket constants for local time information */

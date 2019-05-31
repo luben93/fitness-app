@@ -1,29 +1,42 @@
-package seemoo.fitbit.activities;
+package seemoo.fitbit.HeartRateTransmitter;
 
-import android.app.Service;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.IBinder;
+import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.WindowManager;
+import android.widget.TextView;
 
-import static org.spongycastle.crypto.tls.ConnectionEnd.server;
+import seemoo.fitbit.R;
 
-public class MyService extends Service {
+public class GattActivity extends Activity {
+    private static final String TAG = GattActivity.class.getSimpleName();
+
+    /* Local UI */
+    private TextView mLocalTimeView;
+    /* Bluetooth API */
     private BluetoothManager mBluetoothManager;
-    private static final String TAG = MyService.class.getSimpleName();
-    private GattServer server;
 
+    private GattServer server;
     @Override
-    public void onCreate() {
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_dump_info);
+
+        mLocalTimeView = (TextView) findViewById(R.id.tv_dumpinfo_steps);
+
+        // Devices with a display should not go to sleep
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
         // We can't continue without proper Bluetooth support
         if (!checkBluetoothSupport(bluetoothAdapter)) {
-            return;
+            finish();
         }
 
         // Register for system Bluetooth events
@@ -31,7 +44,7 @@ public class MyService extends Service {
         server = new GattServer(new GattServer.Callback() {
             @Override
             public void update(long timestamp) {
-                Log.d(TAG, "update: "+timestamp);
+                updateLocalUi(timestamp);
             }
         },mBluetoothManager,this);
         registerReceiver(server.mBluetoothReceiver, filter);
@@ -45,20 +58,33 @@ public class MyService extends Service {
             server.startServer();
         }
     }
+    /**
+     * Update graphical UI on devices that support it with the current time.
+     */
+    private void updateLocalUi(long timestamp) {
+
+    }
+
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+    protected void onStart() {
+        super.onStart();
+        // Register for system clock events
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_TIME_TICK);
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(server.mTimeReceiver, filter);
-        return START_STICKY;
     }
 
     @Override
-    public void onDestroy() {
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(server.mTimeReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
         super.onDestroy();
 
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
@@ -66,7 +92,6 @@ public class MyService extends Service {
             server.stopServer();
             server.stopAdvertising();
         }
-        unregisterReceiver(server.mTimeReceiver);
 
         unregisterReceiver(server.mBluetoothReceiver);
     }
@@ -91,9 +116,5 @@ public class MyService extends Service {
 
         return true;
     }
-    @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        return null;
-    }
+
 }
