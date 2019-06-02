@@ -727,7 +727,9 @@ public class MainFragment extends Fragment {
     public void liveModeFavButton(View v) {
         Log.d(TAG, "liveModeFavButton: ");
         interactions.liveModeActive();
-        interactions.intAuthentication();
+        if (!interactions.getAuthenticated()) {
+            interactions.intAuthentication();
+        }
         interactions.intLiveModeEnable();
 //        saveButton(v);
 //        graph.setVisibility(View.VISIBLE);

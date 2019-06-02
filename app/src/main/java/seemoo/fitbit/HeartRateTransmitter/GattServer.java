@@ -34,6 +34,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.ParcelUuid;
 import android.util.Log;
 
@@ -43,12 +44,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class GattServer  {
-    public static UUID HEARTRATE_SERVICE = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
+public class GattServer {
+    public static final UUID HEARTRATE_SERVICE = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
     /* Mandatory HeartRate Mesurment Characteristic */
-    public static UUID HEART_RATE_MEASUREMENT = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
+    public static final UUID HEART_RATE_MEASUREMENT = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
     /* Mandatory Client Characteristic Config Descriptor */
-    public static UUID CLIENT_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    public static final UUID CLIENT_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    private static final String PREFRENCE_KEY = "HR_reciver";
+    private static final String HR_ACTION = "heartRate";
 
     private static final String TAG = GattServer.class.getSimpleName();
 
@@ -62,14 +65,15 @@ public class GattServer  {
     private Callback callback;
     private Context context;
     private int currentHeartrate = 65;
+    private SharedPreferences prefs;
 
-
-    public GattServer(Callback callback,BluetoothManager bluetoothManager,Context context){
+    public GattServer(Callback callback, BluetoothManager bluetoothManager, Context context) {
         this.callback = callback;
         this.mBluetoothManager = bluetoothManager;
         this.context = context;
         IntentFilter filter = new IntentFilter();
         filter.addAction("HRdata");
+        prefs = context.getSharedPreferences(PREFRENCE_KEY, context.MODE_PRIVATE);
 
         context.registerReceiver(HRreceiver, filter);
     }
@@ -89,7 +93,7 @@ public class GattServer  {
             Log.d(TAG, "onReceive: time recived");
 
             long now = System.currentTimeMillis();
-            Log.d(TAG, "onReceive: time is: "+now);
+            Log.d(TAG, "onReceive: time is: " + now);
             notifyRegisteredDevices();
             updateLocalUi(now);
         }
@@ -124,18 +128,18 @@ public class GattServer  {
     private BroadcastReceiver HRreceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            currentHeartrate = intent.getIntExtra("heartRate",0);
-            Log.d(TAG, "onReceive: HR intent"+currentHeartrate);
+            currentHeartrate = intent.getIntExtra(HR_ACTION, 0);
+            Log.d(TAG, "onReceive: HR intent" + currentHeartrate);
         }
     };
 
-    private byte[] convertHeartRate(int heartRate){
+    private byte[] convertHeartRate(int heartRate) {
 //        byte[] flags = new byte[1];
 //        byte[] mesurment = ByteBuffer.allocate(1).putInt(heartRate).array();
 //        byte[] all = org.spongycastle.util.Arrays.concatenate(flags,mesurment);
 //        Log.d(TAG, "getExactTime: "+all);
         byte[] manual = new byte[2];
-        manual[1]= (byte) heartRate ;
+        manual[1] = (byte) heartRate;
         return manual;
     }
 
@@ -167,6 +171,12 @@ public class GattServer  {
 
         mBluetoothLeAdvertiser
                 .startAdvertising(settings, data, mAdvertiseCallback);
+
+        //todo reconnect to registered devices here
+        String deviceAdress = prefs.getString("device", "");
+
+        mRegisteredDevices.add(bluetoothAdapter.getRemoteDevice(deviceAdress));
+
     }
 
     /**
@@ -183,7 +193,7 @@ public class GattServer  {
      * from the Time Profile.
      */
     public void startServer() {
-        Log.d(TAG, "startServer: address " +mBluetoothManager.getAdapter().getAddress());
+        Log.d(TAG, "startServer: address " + mBluetoothManager.getAdapter().getAddress());
         mBluetoothGattServer = mBluetoothManager.openGattServer(context, mGattServerCallback);
         if (mBluetoothGattServer == null) {
             Log.w(TAG, "Unable to create GATT server");
@@ -239,7 +249,7 @@ public class GattServer  {
 
         @Override
         public void onStartFailure(int errorCode) {
-            Log.w(TAG, "LE Advertise Failed: "+errorCode);
+            Log.w(TAG, "LE Advertise Failed: " + errorCode);
         }
     };
 
@@ -260,7 +270,7 @@ public class GattServer  {
                     .getService(HEARTRATE_SERVICE)
                     .getCharacteristic(HEART_RATE_MEASUREMENT);
             timeCharacteristic.setValue(exactTime);
-            Log.d(TAG, "notifyRegisteredDevices: "+device.getName() + " "+ device.getAddress());
+            Log.d(TAG, "notifyRegisteredDevices: " + device.getName() + " " + device.getAddress());
             mBluetoothGattServer.notifyCharacteristicChanged(device, timeCharacteristic, false);
         }
     }
@@ -286,6 +296,7 @@ public class GattServer  {
                 Log.i(TAG, "BluetoothDevice DISCONNECTED: " + device);
                 //Remove device from any active subscriptions
                 mRegisteredDevices.remove(device);
+                startAdvertising();
             }
         }
 
@@ -293,7 +304,7 @@ public class GattServer  {
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
                                                 BluetoothGattCharacteristic characteristic) {
             if (HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-                Log.i(TAG, "Read heartrate:"+currentHeartrate);
+                Log.i(TAG, "Read heartrate:" + currentHeartrate);
                 mBluetoothGattServer.sendResponse(device,
                         requestId,
                         BluetoothGatt.GATT_SUCCESS,
@@ -345,9 +356,13 @@ public class GattServer  {
                 if (Arrays.equals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, value)) {
                     Log.d(TAG, "Subscribe device to notifications: " + device);
                     mRegisteredDevices.add(device);
+                    device.createBond();
+                    //todo save registered device here
+                    prefs.edit().putString("device", device.getAddress()).apply();
                 } else if (Arrays.equals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE, value)) {
                     Log.d(TAG, "Unsubscribe device from notifications: " + device);
                     mRegisteredDevices.remove(device);
+                    startAdvertising();
                 }
 
                 if (responseNeeded) {
