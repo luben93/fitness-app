@@ -1,29 +1,18 @@
 package seemoo.fitbit.fragments;
 
-import android.app.Activity;
 import android.app.Service;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
-import android.content.Context;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
@@ -33,32 +22,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import seemoo.fitbit.R;
+import seemoo.fitbit.activities.WorkActivity;
 import seemoo.fitbit.commands.Commands;
 import seemoo.fitbit.events.TransferProgressEvent;
-import seemoo.fitbit.fragments.MainFragment;
-import seemoo.fitbit.information.Alarm;
-import seemoo.fitbit.information.Information;
 import seemoo.fitbit.information.InformationList;
 import seemoo.fitbit.interactions.Interactions;
 import seemoo.fitbit.miscellaneous.ConstantValues;
-import seemoo.fitbit.miscellaneous.ExternalStorage;
 import seemoo.fitbit.miscellaneous.FitbitDevice;
-import seemoo.fitbit.miscellaneous.InternalStorage;
 import seemoo.fitbit.miscellaneous.Utilities;
 import seemoo.fitbit.tasks.Tasks;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class BluetoothGattClient extends Service {
 
     private final String TAG = this.getClass().getSimpleName();
 
     private BluetoothDevice device;
-    private ArrayList<BluetoothGattService> services = new ArrayList<>();
+    public ArrayList<BluetoothGattService> services = new ArrayList<>();
 
-    private Commands commands;
-    private Interactions interactions;
-    private Tasks tasks;
+    public Commands commands;
+    public Interactions interactions;
+    public Tasks tasks;
 //    private InformationList informationToDisplay = new InformationList("");
 //    private ListView mListView;
 //    private FloatingActionButton clearAlarmsButton;
@@ -67,8 +50,8 @@ public class BluetoothGattClient extends Service {
     private Object interactionData;
     private Toast toast_short;
     private Toast toast_long;
-//    private int alarmIndex = -1;
-    private String currentInformationList;
+    //    private int alarmIndex = -1;
+//    private String currentInformationList;
 //    private int customLength = -1;
 //    private String fileName;
 //    private boolean firstPress = true;
@@ -83,17 +66,19 @@ public class BluetoothGattClient extends Service {
     //    private GraphView graph;
     private BarGraphSeries<DataPoint> graphDataSeries;
     private int graphCounter = 0;
-
-    private gattView getActivity() {
-        return null;
-    }
+//
+//    private gattView getActivity() {
+//        return null;
+//    }
 
     //}
 
     @Override
     public void onCreate() {
+        device = (BluetoothDevice) getIntent().getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
 
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -113,12 +98,27 @@ public class BluetoothGattClient extends Service {
 
     public interface gattView {
         void showConnectionLostDialog();
+
         void destroyConnectionLostDialog();
+
         void onCharacteristicRead(Interactions interactions);
+
+        void onCharacteristicChanged(BluetoothGattCharacteristic characteristic,Object interactionData);
+    }
+
+    /**
+     * Connects the app with the device.
+     */
+    public void connect() {
+        FitbitDevice.setMacAddress(device.getAddress());
+        BluetoothGatt mBluetoothGatt = device.connectGatt(this, false, mBluetoothGattCallback);
+        commands = new Commands(mBluetoothGatt);
+        interactions = new Interactions(this, toast_short, commands);
+        tasks = new Tasks(interactions, this);
     }
 
 
-        private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
+    private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
 
         /**
          * {@inheritDoc}
@@ -131,6 +131,7 @@ public class BluetoothGattClient extends Service {
                 services.clear();
                 commands.close();
                 getActivity().showConnectionLostDialog();
+                connect();
 
                 Log.e(TAG, "Connection lost. Trying to reconnect.");
             } else if (newState == BluetoothProfile.STATE_CONNECTING) {
@@ -138,6 +139,7 @@ public class BluetoothGattClient extends Service {
             } else if (newState == BluetoothProfile.STATE_CONNECTED) {
                 bluetoothConnectionState = MainFragment.BluetoothConnectionState.CONNECTED;
                 getActivity().destroyConnectionLostDialog();
+                connect();
 
                 TransferProgressEvent event = new TransferProgressEvent(TransferProgressEvent.EVENT_TYPE_FW);
                 event.setTransferState(TransferProgressEvent.STATE_REBOOT_FIN);
@@ -233,6 +235,7 @@ public class BluetoothGattClient extends Service {
                 services.clear();
                 commands.close();
                 getActivity().showConnectionLostDialog();
+                connect();
 
                 Log.e(TAG, "Disconnected. Trying to reconnect...");
             } else {
@@ -246,72 +249,9 @@ public class BluetoothGattClient extends Service {
                 }
                 if (interactionData != null) {
 
-                    String keyAdditionalRawOutput = getResources().getString(R.string.settings_workactivity_1);
-                    String keyAdditionalAlarmInformation = getResources().getString(R.string.settings_workactivity_2);
-                    String keySaveDumpFiles = getResources().getString(R.string.settings_workactivity_3);
-                    final SharedPreferences spAdditionalRawOutput = getActivity().getSharedPreferences(keyAdditionalRawOutput, MODE_PRIVATE);
-                    final SharedPreferences spAdditionalAlarmInformation = getActivity().getSharedPreferences(keyAdditionalAlarmInformation, MODE_PRIVATE);
-                    final SharedPreferences spSaveDumpFiles = getActivity().getSharedPreferences(keySaveDumpFiles, MODE_PRIVATE);
-                    final Boolean additionalRawOutputBoolean = spAdditionalRawOutput.getBoolean(keyAdditionalRawOutput, false);
-                    final Boolean additionalAlarmInformationBoolean = spAdditionalAlarmInformation.getBoolean(keyAdditionalAlarmInformation, false);
-                    final Boolean saveDumpFilesBoolean = spSaveDumpFiles.getBoolean(keySaveDumpFiles, false);
-
-                    currentInformationList = ((InformationList) interactionData).getName();
-                    information.put(currentInformationList, (InformationList) interactionData);
-                    graphDataSeries = Utilities.updateGraph(characteristic.getValue());
-                    getActivity().runOnUiThread(informationListRunnable(currentInformationList, information, interactionData,
-                            additionalRawOutputBoolean, additionalAlarmInformationBoolean,
-                            saveDumpFilesBoolean, informationToDisplay, mListView, saveButton,
-                            clearAlarmsButton, characteristic.getValue()));
+                    getActivity().onCharacteristicChanged(characteristic);
                 }
             }
-        }
-
-        private Runnable informationListRunnable(final String currentInformationListRun, final HashMap<String, InformationList> informationRun,
-                                                 final Object interactionDataRun, final Boolean additionalRawOutputBooleanRun, final Boolean additionalAlarmInformationBooleanRun,
-                                                 final Boolean saveDumpFilesBooleanRun, final InformationList informationToDisplayRun,
-                                                 final ListView mListViewRun, final FloatingActionButton saveButtonRun,
-                                                 final FloatingActionButton clearAlarmsButtonRun, final byte[] characteristicValue) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (Utilities.checkLiveModeReadout(characteristicValue) == false) {
-                        graph.setVisibility(View.GONE);
-                    }
-                    if ((graphCounter % 30) == 0) {
-                        graph.removeAllSeries();
-                        graph.addSeries(graphDataSeries);
-                    }
-                    graphCounter++;
-                    InformationList temp = new InformationList("");
-                    temp.addAll(informationRun.get(((InformationList) interactionDataRun).getName()));
-                    if (saveDumpFilesBooleanRun) {
-                        ExternalStorage.saveInformationList(informationRun.get(currentInformationListRun), currentInformationListRun, getActivity());
-                    }
-                    if (currentInformationListRun.equals("Memory_KEY")) {
-                        FitbitDevice.setEncryptionKey(informationRun.get(currentInformationListRun).getBeautyData().trim());
-                        Log.e(TAG, "Encryption Key: " + FitbitDevice.ENCRYPTION_KEY);
-                        InternalStorage.saveString(FitbitDevice.ENCRYPTION_KEY, ConstantValues.FILE_ENC_KEY, getActivity());
-                    }
-                    final int positionRawOutput = temp.getPosition(new Information(ConstantValues.RAW_OUTPUT));
-                    if (!additionalRawOutputBooleanRun && positionRawOutput > 0) {
-                        temp.remove(positionRawOutput - 1, temp.size());
-                    }
-                    final int positionAdditionalInfo = temp.getPosition(new Information(ConstantValues.ADDITIONAL_INFO));
-                    if (!additionalAlarmInformationBooleanRun && positionAdditionalInfo > 0) {
-                        temp.remove(positionAdditionalInfo - 1, positionRawOutput - 1);
-                    }
-                    informationToDisplayRun.override(temp, mListViewRun);
-                    if (mListViewRun.getVisibility() == View.VISIBLE) {
-                        saveButtonRun.setVisibility(View.VISIBLE);
-                    }
-                    if (informationToDisplayRun.size() > 1 && informationToDisplayRun.get(1) instanceof Alarm) {
-                        clearAlarmsButtonRun.setVisibility(View.VISIBLE);
-                    }
-                }
-            };
-
-            return runnable;
         }
 
         /**
