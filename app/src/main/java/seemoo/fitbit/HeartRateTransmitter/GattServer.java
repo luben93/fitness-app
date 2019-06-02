@@ -130,12 +130,12 @@ public class GattServer  {
     };
 
     private byte[] convertHeartRate(int heartRate){
-        byte[] flags = new byte[6];
-        byte[] mesurment = ByteBuffer.allocate(8).putInt(heartRate).array();
-        byte[] all = org.spongycastle.util.Arrays.concatenate(flags,mesurment);
-        Log.d(TAG, "getExactTime: "+all);
+//        byte[] flags = new byte[1];
+//        byte[] mesurment = ByteBuffer.allocate(1).putInt(heartRate).array();
+//        byte[] all = org.spongycastle.util.Arrays.concatenate(flags,mesurment);
+//        Log.d(TAG, "getExactTime: "+all);
         byte[] manual = new byte[2];
-        manual[1]= 0x41;
+        manual[1]= (byte) heartRate ;
         return manual;
     }
 
