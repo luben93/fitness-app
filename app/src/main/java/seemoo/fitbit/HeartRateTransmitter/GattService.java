@@ -60,7 +60,7 @@ public class GattService extends Service {
                 while (running){
                     try {
                         Log.d(TAG, "run: loop");
-                        server.notifyRegisteredDevices(45,(byte)0);
+                        server.notifyRegisteredDevices();
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();

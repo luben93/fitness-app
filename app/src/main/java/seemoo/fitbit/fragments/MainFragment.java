@@ -40,6 +40,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import seemoo.fitbit.HeartRateTransmitter.GattService;
 import seemoo.fitbit.R;
 import seemoo.fitbit.activities.MainActivity;
 import seemoo.fitbit.activities.WorkActivity;
@@ -88,6 +89,7 @@ public class MainFragment extends Fragment {
     private AlertDialog connectionLostDialog = null;
 
     public enum BluetoothConnectionState {DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING, UNKNOWN}
+
     private BluetoothConnectionState bluetoothConnectionState = BluetoothConnectionState.UNKNOWN;
 
     private HashMap<String, InformationList> information = new HashMap<>();
@@ -175,9 +177,20 @@ public class MainFragment extends Fragment {
                         } else {
                             graph.setVisibility(View.GONE);
                         }
-                        informationToDisplay.override(information.get(interactions.getCurrentInteraction()), mListView);
+                        InformationList info = information.get(interactions.getCurrentInteraction());
+                        informationToDisplay.override(info, mListView);
                         saveButton.setVisibility(View.VISIBLE);
                         currentInformationList = "LiveMode";
+                        String[] data = info.getList().get(6).toString().split(" ");
+                        if (data.length == 2) {
+                            Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
+                            int heartRate = Integer.parseInt(data[1]);
+                            Intent intent = new Intent();
+                            intent.putExtra("heartRate", heartRate);
+                            intent.setAction("HRdata");
+                            getContext().sendBroadcast(intent);
+                            Log.d(TAG, "run: broadcast intent sent:: "+intent.getExtras()+ " "+ heartRate);
+                        }
                     }
                 });
             }
@@ -397,8 +410,8 @@ public class MainFragment extends Fragment {
     /**
      *
      */
-    public void showConnectionLostDialog(){
-        if(getActivity() != null && bluetoothConnectionState != BluetoothConnectionState.CONNECTED &&
+    public void showConnectionLostDialog() {
+        if (getActivity() != null && bluetoothConnectionState != BluetoothConnectionState.CONNECTED &&
                 bluetoothConnectionState != BluetoothConnectionState.CONNECTING) {
             if (null == connectionLostDialog) {
 
@@ -506,7 +519,7 @@ public class MainFragment extends Fragment {
      * Collects basic information about the selected device, stores them in 'information' and displays them to the user.
      */
     public void collectBasicInformation() {
-        if(isAdded()){
+        if (isAdded()) {
             if (!firstPress) {
                 saveButton.setVisibility(View.VISIBLE);
             }
@@ -711,12 +724,12 @@ public class MainFragment extends Fragment {
         }
     }
 
-    public void liveModeFavButton(View v){
+    public void liveModeFavButton(View v) {
         Log.d(TAG, "liveModeFavButton: ");
         interactions.liveModeActive();
         interactions.intAuthentication();
         interactions.intLiveModeEnable();
-        saveButton(v);
+//        saveButton(v);
 //        graph.setVisibility(View.VISIBLE);
 
 //        interactions.intLiveModeDisable();
@@ -792,8 +805,7 @@ public class MainFragment extends Fragment {
         if (isAppFirmware) {
             if (FitbitDevice.DEVICE_TYPE == 0x07) {
                 plain = Firmware.generateFirmwareFrame(fileName, 0xa000, 0xa000 + 0x026020, Utilities.hexStringToInt(FitbitDevice.MEMORY_APP), false, getActivity());
-            }
-            else {
+            } else {
                 plain = Firmware.generateFirmwareFrame(fileName, 0x9c00, 0x9c00 + 0x048c50, Utilities.hexStringToInt(FitbitDevice.MEMORY_APP), false, getActivity());// charge hr
             }
             //TODO make this non-hw specific
@@ -804,8 +816,7 @@ public class MainFragment extends Fragment {
 
             if (FitbitDevice.DEVICE_TYPE == 0x07) {
                 plain = Firmware.generateFirmwareFrame(fileName, 0x0200, 0x0200 + 0x009e00, Utilities.hexStringToInt(FitbitDevice.MEMORY_BSL), true, getActivity());
-            }
-            else {
+            } else {
                 plain = Firmware.generateFirmwareFrame(fileName, 0x0200, 0x0200 + 0x009800, Utilities.hexStringToInt(FitbitDevice.MEMORY_BSL), true, getActivity()); //charge hr
                 //plain = Firmware.generateFirmwareFrame(fileName, (bslpos-flashbase), (bslpos-flashbase) + (apppos-flashbase), bslpos , true, getActivity()); //RF_ERR_RX_PACKET_NOT_HANDLED
             }
@@ -815,8 +826,7 @@ public class MainFragment extends Fragment {
         ExternalStorage.saveString(plain, "fwplain", getActivity()); //just for debugging...
 
         String fw = plain;
-        if (FitbitDevice.ENCRYPTED)
-        {
+        if (FitbitDevice.ENCRYPTED) {
             try {
                 fw = Crypto.encryptDump(Utilities.hexStringToByteArray(plain), getActivity());
             } catch (Exception e) {
@@ -993,7 +1003,7 @@ public class MainFragment extends Fragment {
     public void onPause() {
         super.onPause();
         WorkActivity workActivity = (WorkActivity) getActivity();
-        if(workActivity != null && workActivity.isBluetoothDisconnectOnPause()){
+        if (workActivity != null && workActivity.isBluetoothDisconnectOnPause()) {
             tasks.clearList();
             interactions.disconnectBluetooth();
         }
