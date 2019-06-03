@@ -64,7 +64,7 @@ public class GattServer {
     private Set<BluetoothDevice> mRegisteredDevices = new HashSet<>();
     private Callback callback;
     private Context context;
-    private int currentHeartrate = 65;
+    private int currentHeartrate = 0;
     private SharedPreferences prefs;
 
     public GattServer(Callback callback, BluetoothManager bluetoothManager, Context context) {
@@ -172,10 +172,10 @@ public class GattServer {
         mBluetoothLeAdvertiser
                 .startAdvertising(settings, data, mAdvertiseCallback);
 
-        //todo reconnect to registered devices here
         String deviceAdress = prefs.getString("device", "");
-
-        mRegisteredDevices.add(bluetoothAdapter.getRemoteDevice(deviceAdress));
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAdress);
+        //todo is device online?
+        mRegisteredDevices.add(device);
 
     }
 

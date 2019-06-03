@@ -68,7 +68,7 @@ public class ScanActivity extends RequestPermissionsActivity {
     private ProgressBar progressBar;
     private boolean deviceFound;
     private boolean progressBarStopp = false;
-
+    private BluetoothAdapter mBluetoothAdapter;
     private Toast toast;
 
     // Stops scanning after SCAN_TIMER milliseconds (only for flags 1 and 2).
@@ -165,7 +165,7 @@ public class ScanActivity extends RequestPermissionsActivity {
         services = new ArrayList<>();
         handler = new Handler();
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
+         mBluetoothAdapter = bluetoothManager.getAdapter();
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         rescanButton = (Button) findViewById(R.id.button_rescan);
         rescanButton.setVisibility(View.GONE);
@@ -179,6 +179,7 @@ public class ScanActivity extends RequestPermissionsActivity {
      * Scans for Bluetooth LE devices.
      */
     private void scan() {
+
         mBluetoothLeScanner.startScan(mScanCallback);
         Log.e(TAG, "Started scanning for Bluetooth LE devices.");
         toast.setText("Scanning...");
@@ -211,6 +212,12 @@ public class ScanActivity extends RequestPermissionsActivity {
             textView.setVisibility(View.VISIBLE);
             alternatingProgressBar();
         }
+        //added by lucas
+        String mac = getIntent().getExtras().getString("macAddress","");
+        if(mac.equals("")) {
+            mScanCallback.onScanResult(0, new ScanResult(mBluetoothAdapter.getRemoteDevice(mac), null, 0, 0));
+        }
+
     }
 
     /**
