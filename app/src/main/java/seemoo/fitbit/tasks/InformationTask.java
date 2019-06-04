@@ -1,7 +1,7 @@
 package seemoo.fitbit.tasks;
 
 
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 
 /**
  * Collects basic information from the device.
@@ -9,7 +9,7 @@ import seemoo.fitbit.fragments.MainFragment;
 class InformationTask extends Task {
 
     private Tasks tasks;
-    private MainFragment mainFragment;
+    private IWearableController mainFragment;
 
     /**
      * Creates an instance of information task.
@@ -17,7 +17,7 @@ class InformationTask extends Task {
      * @param tasks    The instance of tasks.
      * @param mainFragment The current mainFragment.
      */
-    InformationTask(Tasks tasks, MainFragment mainFragment) {
+    InformationTask(Tasks tasks, IWearableController mainFragment) {
         this.tasks = tasks;
         this.mainFragment = mainFragment;
     }

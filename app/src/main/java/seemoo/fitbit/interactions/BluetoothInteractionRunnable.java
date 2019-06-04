@@ -1,6 +1,7 @@
 package seemoo.fitbit.interactions;
 
 import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -18,7 +19,7 @@ class BluetoothInteractionRunnable implements Runnable {
     private Semaphore mInteractionLock;
     private BluetoothInteractionQueue mBluetoothInteractionQueue;
     private Interactions interactions;
-    private Activity activity;
+//    private Context activity;
     private Toast toast;
 
     /**
@@ -31,12 +32,12 @@ class BluetoothInteractionRunnable implements Runnable {
      * @param activity                   The current activity.
      * @param toast                      The toast to send messages to the user.
      */
-    BluetoothInteractionRunnable(BluetoothInteraction interaction, Semaphore lock, Interactions interactions, BluetoothInteractionQueue mBluetoothInteractionQueue, Activity activity, Toast toast) {
+    BluetoothInteractionRunnable(BluetoothInteraction interaction, Semaphore lock, Interactions interactions, BluetoothInteractionQueue mBluetoothInteractionQueue, Toast toast) {
         mBluetoothInteraction = interaction;
         mInteractionLock = lock;
         this.interactions = interactions;
         this.mBluetoothInteractionQueue = mBluetoothInteractionQueue;
-        this.activity = activity;
+//        this.activity = activity;
         this.toast = toast;
     }
 
@@ -75,10 +76,10 @@ class BluetoothInteractionRunnable implements Runnable {
                         interactions.setCurrentInteraction(mBluetoothInteraction.getClass().getSimpleName());
                     } else {
                         Log.e(TAG, "Error: Timeout after " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getTimer() + " milliseconds at interaction: " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName());
-                        activity.runOnUiThread(new Runnable() {
-
-                            @Override
-                            public void run() {
+//                        activity.runOnUiThread(new Runnable() {
+//
+//                            @Override
+//                            public void run() {
                                 if (mBluetoothInteractionQueue.getFirstBluetoothInteraction() != null) {
                                     toast.setText("Error: Timeout of " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName().replaceFirst("Interaction", ""));
 //                                    toast.setText("Error: Timeout FW-Update!");
@@ -86,8 +87,8 @@ class BluetoothInteractionRunnable implements Runnable {
                                     toast.setText("Error: Timeout of last interaction");
                                 }
                                 toast.show();
-                            }
-                        });
+//                            }
+//                        });
                         interactions.interactionFinished();
                         run();
                     }

@@ -1,5 +1,6 @@
 package seemoo.fitbit.interactions;
 
+import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -20,7 +21,6 @@ class BluetoothInteractionQueue {
     private Interactions interactions;
     private Semaphore mInteractionLock;
     private ExecutorService mExecutorService;
-    private WorkActivity activity;
     private Toast toast;
     //FIFO list of interactions which gets automatically executed.
     private ArrayList<BluetoothInteraction> bluetoothInteractions;
@@ -29,12 +29,10 @@ class BluetoothInteractionQueue {
      * Creates an interaction queue.
      *
      * @param interactions  The instance of interactions.
-     * @param activity      The current activity.
      * @param toast         The toast, to send messages to the user.
      */
-    BluetoothInteractionQueue(Interactions interactions, WorkActivity activity, Toast toast) {
+    BluetoothInteractionQueue(Interactions interactions, Toast toast) {
         this.interactions = interactions;
-        this.activity = activity;
         this.toast = toast;
         mInteractionLock = new Semaphore(1, true);
         mExecutorService = Executors.newSingleThreadExecutor();
@@ -49,7 +47,7 @@ class BluetoothInteractionQueue {
      */
     void addInteraction(BluetoothInteraction interaction) {
         bluetoothInteractions.add(interaction);
-        BluetoothInteractionRunnable runnable = new BluetoothInteractionRunnable(interaction, mInteractionLock, interactions, this, activity, toast);
+        BluetoothInteractionRunnable runnable = new BluetoothInteractionRunnable(interaction, mInteractionLock, interactions, this, toast);
         mExecutorService.execute(runnable);
     }
 

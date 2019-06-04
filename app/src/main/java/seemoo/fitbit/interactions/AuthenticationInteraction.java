@@ -9,7 +9,7 @@ import org.spongycastle.crypto.engines.XTEAEngine;
 import org.spongycastle.crypto.macs.CMac;
 import org.spongycastle.crypto.params.KeyParameter;
 
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.activities.WorkActivity;
 import seemoo.fitbit.miscellaneous.FitbitDevice;
 import seemoo.fitbit.information.InformationList;
@@ -23,7 +23,7 @@ import seemoo.fitbit.commands.Commands;
 class AuthenticationInteraction extends BluetoothInteraction {
 
     private String acknowledgement;
-    private MainFragment mainFragment;
+    private IWearableController mainFragment;
     private Toast toast;
     private Commands commands;
     private Interactions interactions;
@@ -37,7 +37,7 @@ class AuthenticationInteraction extends BluetoothInteraction {
      * @param commands     The instance of commands.
      * @param interactions The instance of interactions.
      */
-    AuthenticationInteraction(MainFragment mainFragment, Toast toast, Commands commands, Interactions interactions) {
+    AuthenticationInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions) {
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;

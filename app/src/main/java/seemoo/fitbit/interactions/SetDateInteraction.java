@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.commands.Commands;
 import seemoo.fitbit.information.InformationList;
 import seemoo.fitbit.miscellaneous.ConstantValues;
@@ -21,7 +21,7 @@ import seemoo.fitbit.miscellaneous.Utilities;
  */
 class SetDateInteraction extends BluetoothInteraction {
 
-    private MainFragment mainFragment;
+    private IWearableController mainFragment;
     private Toast toast;
     private Commands commands;
     private Calendar calendar;
@@ -34,7 +34,7 @@ class SetDateInteraction extends BluetoothInteraction {
      * @param toast    The toast, to send messages to the user.
      * @param commands The instance of commands.
      */
-    SetDateInteraction(MainFragment mainFragment, Toast toast, Commands commands) {
+    SetDateInteraction(IWearableController mainFragment, Toast toast, Commands commands) {
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;

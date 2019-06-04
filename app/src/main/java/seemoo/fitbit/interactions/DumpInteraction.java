@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import seemoo.fitbit.R;
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.commands.Commands;
 import seemoo.fitbit.dumps.DailySummaryRecord;
 import seemoo.fitbit.dumps.Dump;
@@ -38,7 +38,7 @@ import seemoo.fitbit.miscellaneous.Crypto;
  */
 class DumpInteraction extends BluetoothInteraction {
 
-    private MainFragment mainFragment;
+    private IWearableController  mainFragment;
     private Toast toast;
     private Commands commands;
     private int dumpType;
@@ -61,7 +61,7 @@ class DumpInteraction extends BluetoothInteraction {
      * @param commands The instance of commands.
      * @param dumpType The dump type. (0 = microdump, 1 = megadump, 2 = alarms, 3 = memory)
      */
-    DumpInteraction(MainFragment mainFragment, Toast toast, Commands commands, int dumpType) {
+    DumpInteraction(IWearableController  mainFragment, Toast toast, Commands commands, int dumpType) {
 
         this.mainFragment = mainFragment;
         this.toast = toast;
@@ -83,7 +83,7 @@ class DumpInteraction extends BluetoothInteraction {
      * @param addressEnd   The end address of the memory part.
      * @param memoryName   The name of the memory part. (Needed for later identification)
      */
-    DumpInteraction(MainFragment mainFragment, Toast toast, Commands commands, int dumpType, String addressBegin, String addressEnd, String memoryName) {
+    DumpInteraction(IWearableController mainFragment, Toast toast, Commands commands, int dumpType, String addressBegin, String addressEnd, String memoryName) {
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;

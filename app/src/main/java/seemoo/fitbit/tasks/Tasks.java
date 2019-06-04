@@ -3,7 +3,7 @@ package seemoo.fitbit.tasks;
 
 import android.bluetooth.BluetoothDevice;
 
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.activities.WorkActivity;
 import seemoo.fitbit.https.HttpsClient;
 import seemoo.fitbit.interactions.Interactions;
@@ -17,7 +17,7 @@ public class Tasks {
     private final String TAG = this.getClass().getSimpleName();
 
     private Interactions interactions;
-    private MainFragment mainFragment;
+    private IWearableController mainFragment;
     private TaskQueue mTaskQueue;
 
     /**
@@ -26,7 +26,7 @@ public class Tasks {
      * @param interactions  The instance of interactions
      * @param mainFragment      The current mainFragment.
      */
-    public Tasks(Interactions interactions, MainFragment mainFragment) {
+    public Tasks(Interactions interactions, IWearableController  mainFragment) {
         this.interactions = interactions;
         this.mainFragment = mainFragment;
         mTaskQueue = new TaskQueue();
@@ -77,10 +77,10 @@ public class Tasks {
      */
     public void taskUploadDump(HttpsClient client, BluetoothDevice device, String type) {
         if (!interactions.getAuthenticated()) {
-            mTaskQueue.addTask(new InteractionsTask(interactions, "authentication", this, (WorkActivity) mainFragment.getActivity()));
+            mTaskQueue.addTask(new InteractionsTask(interactions, "authentication", this));
         }
         if (mainFragment.getDataFromInformation(type) == null || mainFragment.wasInformationListAlreadyUploaded(type)) {
-            mTaskQueue.addTask(new InteractionsTask(interactions, type, this, (WorkActivity) mainFragment.getActivity()));
+            mTaskQueue.addTask(new InteractionsTask(interactions, type, this) );
         }
         mTaskQueue.addTask(new UploadDumpTask(client, device, mainFragment, type, this));
         if (type != ConstantValues.INFORMATION_MICRODUMP) {

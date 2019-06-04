@@ -1,11 +1,10 @@
 package seemoo.fitbit.interactions;
 
 import android.util.Log;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import seemoo.fitbit.R;
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.activities.WorkActivity;
 import seemoo.fitbit.miscellaneous.FitbitDevice;
 import seemoo.fitbit.information.InformationList;
@@ -19,7 +18,7 @@ public class Interactions {
 
     private final String TAG = this.getClass().getSimpleName();
 
-    private MainFragment mainFragment;
+    private IWearableController mainFragment;
     private Toast toast;
     private Commands commands;
     private BluetoothInteractionQueue mBluetoothInteractionQueue;
@@ -38,7 +37,7 @@ public class Interactions {
      * @param toast         The toast. to send messages to the user.
      * @param commands      The instance to commands.
      */
-    public Interactions(MainFragment mainFragment, Toast toast, Commands commands) {
+    public Interactions(IWearableController mainFragment, Toast toast, Commands commands) {
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;
@@ -215,13 +214,13 @@ public class Interactions {
      */
     public void intGetAlarm() {
         if (commands.getmBluetoothGatt().getDevice().getAddress().equals(mainFragment.getString(R.string.alta))) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
                     toast.setText("GetAlarm is not supported by this device!");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, "GetAlarm is not supported by this device!");
         } else {
             intEstablishAirlink();
@@ -251,13 +250,13 @@ public class Interactions {
      */
     public void intSetAlarm(int position, InformationList informationList) {
         if (commands.getmBluetoothGatt().getDevice().getAddress().equals(mainFragment.getString(R.string.alta))) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
                     toast.setText("SetAlarm is not supported by this device!");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, "SetAlarm is not supported by this device!");
         } else {
             intEstablishAirlink();

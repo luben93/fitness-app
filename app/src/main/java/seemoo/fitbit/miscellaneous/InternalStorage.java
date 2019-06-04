@@ -30,7 +30,7 @@ public class InternalStorage {
      * @param name     The name of the string to be saved. (The real file name will be: name_serialNumber)
      * @param activity The current activity.
      */
-    public static void saveString(String string, String name, Activity activity) {
+    public static void saveString(String string, String name, Context activity) {
         save(string, getFileNameForCurrentDevice(name), activity);
     }
 
@@ -40,7 +40,7 @@ public class InternalStorage {
      * @param fileName The fileName of the file.
      * @param activity The current activity.
      */
-    private static void save(String string, String fileName, Activity activity) {
+    private static void save(String string, String fileName, Context activity) {
         try {
             FileOutputStream outputStream = activity.openFileOutput(fileName, Context.MODE_PRIVATE);
             outputStream.write(string.getBytes());
@@ -57,7 +57,7 @@ public class InternalStorage {
      * @param activity The current activity.
      * @return The loaded file.
      */
-    public static String loadString(String name, Activity activity) {
+    public static String loadString(String name, Context activity) {
         return load(getFileNameForCurrentDevice(name), activity);
     }
 
@@ -67,7 +67,7 @@ public class InternalStorage {
      * @param activity The current activity.
      * @return The loaded file.
      */
-    private static String load(String fileName, Activity activity) {
+    private static String load(String fileName, Context activity) {
         String result = "";
         try {
             FileInputStream inputStream = activity.openFileInput(fileName);
@@ -92,7 +92,7 @@ public class InternalStorage {
      * @param activity The current activity.
      * @return The loaded file.
      */
-    public static ArrayList<String> loadLastDevices(Activity activity) {
+    public static ArrayList<String> loadLastDevices(Context activity) {
         ArrayList<String> result = new ArrayList<>();
         String lastBLEDevices = load(ConstantValues.LAST_DEVICES, activity);
         for (int i = 0; i < 10; i++) {
@@ -116,7 +116,7 @@ public class InternalStorage {
      * @param name The name + mac address of the device to store.
      * @param activity The current activity.
      */
-    public static void saveLastDevice(String name, Activity activity) {
+    public static void saveLastDevice(String name, Context activity) {
         ArrayList<String> lastDevices = new ArrayList<>();
         lastDevices.addAll(loadLastDevices(activity));
         while (lastDevices.size() > 10) {
@@ -147,7 +147,7 @@ public class InternalStorage {
      * Clears the list of last devices.
      * @param activity The current Activity.
      */
-    public static void clearLastDevices(Activity activity) {
+    public static void clearLastDevices(Context activity) {
         File file = new File(activity.getFilesDir(), ConstantValues.LAST_DEVICES);
         file.delete();
     }
@@ -159,7 +159,7 @@ public class InternalStorage {
      *
      * @param activity The current activity.
      */
-    public static void loadAuthFiles(Activity activity) {
+    public static void loadAuthFiles(Context activity) {
         FitbitDevice.setNonce(loadString(ConstantValues.FILE_NONCE, activity));
         FitbitDevice.setAuthenticationKey(loadString(ConstantValues.FILE_AUTH_KEY, activity));
         FitbitDevice.setAccessTokenKey(loadString(ConstantValues.FILE_ACCESS_TOKEN_KEY, activity));
@@ -168,11 +168,11 @@ public class InternalStorage {
         FitbitDevice.setEncryptionKey(loadString(ConstantValues.FILE_ENC_KEY, activity));
     }
 
-    public static String loadLastDevice(Activity activity){
+    public static String loadLastDevice(Context activity){
         return load(ConstantValues.LAST_DEVICE, activity);
     }
 
-    public static void clearLastDevice(Activity activity){
+    public static void clearLastDevice(Context activity){
         save("", ConstantValues.LAST_DEVICE, activity);
     }
 }

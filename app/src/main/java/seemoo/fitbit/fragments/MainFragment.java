@@ -20,10 +20,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -40,7 +38,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import seemoo.fitbit.HeartRateTransmitter.GattService;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.R;
 import seemoo.fitbit.activities.MainActivity;
 import seemoo.fitbit.activities.WorkActivity;
@@ -63,7 +61,7 @@ import seemoo.fitbit.tasks.Tasks;
 
 import static android.content.Context.MODE_PRIVATE;
 
-public class MainFragment extends Fragment {
+public class MainFragment extends Fragment implements IWearableController {
 
     private final String TAG = this.getClass().getSimpleName();
 
@@ -88,7 +86,7 @@ public class MainFragment extends Fragment {
     private boolean firstPress = true;
     private AlertDialog connectionLostDialog = null;
 
-    public enum BluetoothConnectionState {DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING, UNKNOWN}
+//    public enum BluetoothConnectionState {DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING, UNKNOWN}
 
     private BluetoothConnectionState bluetoothConnectionState = BluetoothConnectionState.UNKNOWN;
 

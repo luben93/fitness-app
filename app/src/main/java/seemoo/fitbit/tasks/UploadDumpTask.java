@@ -2,7 +2,7 @@ package seemoo.fitbit.tasks;
 
 import android.bluetooth.BluetoothDevice;
 
-import seemoo.fitbit.fragments.MainFragment;
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.https.HttpsClient;
 import seemoo.fitbit.miscellaneous.ConstantValues;
 
@@ -13,7 +13,7 @@ class UploadDumpTask extends Task {
 
     private HttpsClient client;
     private BluetoothDevice device;
-    private MainFragment mainFragment;
+    private IWearableController  mainFragment;
     private String type;
     private Tasks tasks;
 
@@ -25,7 +25,7 @@ class UploadDumpTask extends Task {
      * @param type The type of the dump.
      * @param tasks The instance of tasks.
      */
-    UploadDumpTask(HttpsClient client, BluetoothDevice device, MainFragment mainFragment, String type, Tasks tasks){
+    UploadDumpTask(HttpsClient client, BluetoothDevice device, IWearableController  mainFragment, String type, Tasks tasks){
         this.client = client;
         this.device = device;
         this.mainFragment = mainFragment;

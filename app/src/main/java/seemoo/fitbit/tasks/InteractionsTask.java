@@ -1,5 +1,6 @@
 package seemoo.fitbit.tasks;
 
+import android.content.Context;
 import android.util.Log;
 
 import seemoo.fitbit.activities.WorkActivity;
@@ -16,7 +17,7 @@ class InteractionsTask extends Task {
     private String type;
     private HttpsClient client;
     private Tasks tasks;
-    private WorkActivity activity;
+//    private Context activity;
 
     private String interactionName = null; //name of the corresponding interaction WITHOUT ...Interaction
 
@@ -26,13 +27,13 @@ class InteractionsTask extends Task {
      * @param interactions The instance of interaction.
      * @param type         The type of the interaction.
      * @param tasks        The instance of tasks.
-     * @param activity     The current activity.
+//     * @param activity     The current activity.
      */
-    InteractionsTask(Interactions interactions, String type, Tasks tasks, WorkActivity activity) {
+    InteractionsTask(Interactions interactions, String type, Tasks tasks) {
         this.interactions = interactions;
         this.type = type;
         this.tasks = tasks;
-        this.activity = activity;
+//        this.activity = activity;
     }
 
     /**
