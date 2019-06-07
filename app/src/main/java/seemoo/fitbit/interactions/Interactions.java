@@ -41,7 +41,7 @@ public class Interactions {
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;
-        mBluetoothInteractionQueue = new BluetoothInteractionQueue(this, (WorkActivity) mainFragment.getActivity(), toast);
+        mBluetoothInteractionQueue = new BluetoothInteractionQueue(this, toast);
     }
 
     /**
@@ -328,13 +328,13 @@ public class Interactions {
                 mBluetoothInteractionQueue.addInteraction(new AuthenticationInteraction(mainFragment, toast, commands, this));
             }
         } else {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
                     toast.setText("Already authenticated.");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, "Already authenticated.");
         }
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));

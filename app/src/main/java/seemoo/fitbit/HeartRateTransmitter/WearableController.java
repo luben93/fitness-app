@@ -334,7 +334,7 @@ public class WearableController extends Service implements IWearableController {
 //    private Resources getResources(){
 //        return getActivity().getResources();
 //    }
-    private Context getContext(){
+    public Context getContext(){
         return this;
     }
 //    public  String getString(int id){
@@ -447,8 +447,8 @@ public class WearableController extends Service implements IWearableController {
         return START_STICKY;
     }
 
-    private boolean running;
 
+    private boolean running;
     /**
      *
      */

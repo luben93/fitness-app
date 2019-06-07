@@ -28,13 +28,13 @@ class InformationTask extends Task {
      */
     @Override
     public void execute() {
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
                 mainFragment.collectBasicInformation();
-            }
-        });
+//            }
+//        });
         tasks.taskFinished();
     }
 }

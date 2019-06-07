@@ -91,24 +91,24 @@ class SetDateInteraction extends BluetoothInteraction {
     InformationList finish() {
         commands.comDisableNotifications1();
         if (result) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    toast.setText("Date set.");
-                    toast.show();
-                }
-            });
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    toast.setText("Date set.");
+//                    toast.show();
+//                }
+//            });
             Log.e(TAG, "Date set.");
         } else {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    toast.setText("Error: Date not set.");
-                    toast.show();
-                }
-            });
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    toast.setText("Error: Date not set.");
+//                    toast.show();
+//                }
+//            });
             Log.e(TAG, "Error: Date not set.");
         }
         return null;
@@ -121,27 +121,27 @@ class SetDateInteraction extends BluetoothInteraction {
         final int currentYear = calendar.get(Calendar.YEAR);
         final int currentMonth = calendar.get(Calendar.MONTH);
         final int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                DatePickerDialog mDatePickerDialog = new DatePickerDialog(mainFragment.getActivity(), new DatePickerDialog.OnDateSetListener() {
-
-
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        calendar.set(Calendar.YEAR, year);
-                        calendar.set(Calendar.MONTH, monthOfYear);
-                        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                        selectTime();
-                    }
-                }, currentYear, currentMonth, currentDay);
-                mDatePickerDialog.setTitle("Select date:");
-                mDatePickerDialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "", mDatePickerDialog);
-                mDatePickerDialog.setCancelable(false);
-                mDatePickerDialog.show();
-            }
-        });
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                DatePickerDialog mDatePickerDialog = new DatePickerDialog(mainFragment.getActivity(), new DatePickerDialog.OnDateSetListener() {
+//
+//
+//                    @Override
+//                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+//                        calendar.set(Calendar.YEAR, year);
+//                        calendar.set(Calendar.MONTH, monthOfYear);
+//                        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+//                        selectTime();
+//                    }
+//                }, currentYear, currentMonth, currentDay);
+//                mDatePickerDialog.setTitle("Select date:");
+//                mDatePickerDialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "", mDatePickerDialog);
+//                mDatePickerDialog.setCancelable(false);
+//                mDatePickerDialog.show();
+//            }
+//        });
     }
 
     /**
@@ -150,26 +150,26 @@ class SetDateInteraction extends BluetoothInteraction {
     private void selectTime() {
         final int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
         final int currentMinute = calendar.get(Calendar.MINUTE);
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                TimePickerDialog mTimePickerDialog = new TimePickerDialog(mainFragment.getActivity(), new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hour, int minute) {
-                        calendar.set(Calendar.HOUR_OF_DAY, hour);
-                        calendar.set(Calendar.MINUTE, minute);
-                        commands.comSetDate(Utilities.longToHexString(calendar.getTime().getTime() / 1000));
-                        Log.e(TAG, "Date: " + calendar.getTime().toString());
-                        setTimer(1000);
-                    }
-                }, currentHour, currentMinute, true);
-                mTimePickerDialog.setTitle("Select time:");
-                mTimePickerDialog.setButton(TimePickerDialog.BUTTON_NEGATIVE, "", mTimePickerDialog);
-                mTimePickerDialog.setCancelable(false);
-                mTimePickerDialog.show();
-            }
-        });
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                TimePickerDialog mTimePickerDialog = new TimePickerDialog(mainFragment.getActivity(), new TimePickerDialog.OnTimeSetListener() {
+//                    @Override
+//                    public void onTimeSet(TimePicker view, int hour, int minute) {
+//                        calendar.set(Calendar.HOUR_OF_DAY, hour);
+//                        calendar.set(Calendar.MINUTE, minute);
+//                        commands.comSetDate(Utilities.longToHexString(calendar.getTime().getTime() / 1000));
+//                        Log.e(TAG, "Date: " + calendar.getTime().toString());
+//                        setTimer(1000);
+//                    }
+//                }, currentHour, currentMinute, true);
+//                mTimePickerDialog.setTitle("Select time:");
+//                mTimePickerDialog.setButton(TimePickerDialog.BUTTON_NEGATIVE, "", mTimePickerDialog);
+//                mTimePickerDialog.setCancelable(false);
+//                mTimePickerDialog.show();
+//            }
+//        });
     }
 
 }

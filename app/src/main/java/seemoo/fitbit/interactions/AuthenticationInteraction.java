@@ -53,28 +53,28 @@ class AuthenticationInteraction extends BluetoothInteraction {
      */
     boolean isFinished() {
         if (acknowledgement.equals(ConstantValues.ACKNOWLEDGEMENT)) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
+//                @Override
+//                public void run() {
                     toast.setText(TAG + " successful.");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, TAG + " successful.");
             interactions.setAuthenticated(true);
             return true;
         } else if (acknowledgement.length() >= 4 && acknowledgement.substring(0, 4).equals(ConstantValues.NEG_ACKNOWLEDGEMENT)) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
                     //Log.e(TAG, "uzpwzpizpzwtpowz");
                     Log.e(TAG, "Error: " + Utilities.getError(acknowledgement));
                     toast.setText(TAG + " failed.");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, TAG + " failed.");
             return true;
         }
@@ -93,30 +93,30 @@ class AuthenticationInteraction extends BluetoothInteraction {
     boolean execute() {
         Log.e(TAG, "Nonce = " + FitbitDevice.NONCE);
         if (FitbitDevice.SERIAL_NUMBER == null) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
                     toast.setDuration(Toast.LENGTH_LONG);
                     toast.setText("No serial number. Please get a Micro- or Megadump.");
                     toast.show();
                     toast.setDuration(Toast.LENGTH_SHORT);
-                }
-            });
+//                }
+//            });
             return false;
         } else if (FitbitDevice.NONCE != null) {
             commands.comEnableNotifications1();
             commands.comAuthenticateInitialize(ConstantValues.RANDOM_NUMBER, Utilities.rotateBytes(Utilities.intToHexString(Utilities.stringToInt(FitbitDevice.NONCE))));
         } else {
             setTimer(-1);
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    ((WorkActivity) mainFragment.getActivity()).startFitbitAuthentication();
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    ((WorkActivity) mainFragment.getActivity()).startFitbitAuthentication();
 //                    interactions.interactionFinished();
-                }
-            });
+//                }
+//            });
         }
         return true;
     }

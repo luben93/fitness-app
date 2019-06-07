@@ -12,6 +12,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import seemoo.fitbit.HeartRateTransmitter.IWearableController;
 import seemoo.fitbit.fragments.MainFragment;
 import seemoo.fitbit.commands.Commands;
 import seemoo.fitbit.events.TransferProgressEvent;
@@ -27,7 +28,7 @@ import seemoo.fitbit.miscellaneous.Encoding;
  */
 class UploadInteraction extends BluetoothInteraction {
 
-    private MainFragment mainFragment;
+    private IWearableController  mainFragment;
     private Toast toast;
     private Commands commands;
     private String dataIn;
@@ -56,7 +57,7 @@ class UploadInteraction extends BluetoothInteraction {
      * @param type     The type of the upload. (1 = microdump, 2 = megadump)
      * @param dataIn   The data of the upload.
      */
-    UploadInteraction(MainFragment mainFragment, Toast toast, Commands commands, int type, String dataIn) { //for micro-/megadumps
+    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, int type, String dataIn) { //for micro-/megadumps
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;
@@ -74,7 +75,7 @@ class UploadInteraction extends BluetoothInteraction {
      * @param dataIn       The data of the upload.
      * @param customLength The length of the data.
      */
-    UploadInteraction(MainFragment mainFragment, Toast toast, Commands commands, Interactions interactions, String dataIn, int customLength) { //for firmware
+    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions, String dataIn, int customLength) { //for firmware
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;
@@ -94,7 +95,7 @@ class UploadInteraction extends BluetoothInteraction {
      * @param position     The position of the alarm in the alarm list to upload.
      * @param alarms       The alarms to upload.
      */
-    UploadInteraction(MainFragment mainFragment, Toast toast, Commands commands, Interactions interactions, int position, InformationList alarms) { //for alarms
+    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions, int position, InformationList alarms) { //for alarms
         this.mainFragment = mainFragment;
         this.toast = toast;
         this.commands = commands;
@@ -127,14 +128,14 @@ class UploadInteraction extends BluetoothInteraction {
             case 0: //firmware
                 typeCode = ConstantValues.TYPE_FIRMWARE;
                 if (dataIn == null) {
-                    mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
+//                    mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                        @Override
+//                        public void run() {
                             toast.setText("Error: No data to upload.");
                             toast.show();
-                        }
-                    });
+//                        }
+//                    });
                     failure = true;
                     Log.e(TAG, "Error: No data to upload.!");
                     return false;
@@ -285,24 +286,23 @@ class UploadInteraction extends BluetoothInteraction {
     @Override
     InformationList finish() {
         if (!transmissionActive && !failure) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
                     toast.setText("Upload to device successful.");
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, "Upload to device successful.");
         } else {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
                     toast.setText("Error: Upload to device unsuccessful."); //FIXME also appears for successful firmware update
                     toast.show();
-                }
-            });
+//                }
+//            });
             Log.e(TAG, "Error: Upload to device unsuccessful.");
         }
         commands.comDisableNotifications1();
@@ -373,46 +373,46 @@ class UploadInteraction extends BluetoothInteraction {
     private void selectDay() {
         dayFlags = 0;
         final String[] days = new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(mainFragment.getActivity());
-                builder.setCancelable(false);
-                builder.setTitle("Which day(s):");
-                boolean[] checkedItems = ((Alarm) alarms.get(position)).getDays();
-                for (int i = 0; i < checkedItems.length; i++) {
-                    if (checkedItems[i]) {
-                        dayFlags = dayFlags + (int) Math.pow(2, i); //exponential
-                    }
-                }
-                builder.setMultiChoiceItems(days, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        if (isChecked) {
-                            dayFlags = dayFlags + (int) Math.pow(2, which);
-                        } else {
-                            dayFlags = dayFlags - (int) Math.pow(2, which);
-                        }
-                    }
-                });
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (dayFlags != 0) {
-                            selectTime();
-                        } else {
-                            alarms.set(position, new Alarm(ConstantValues.EMPTY_ALARM));
-                            String data = createData();
-                            sendingData.addAll(Encoding.slip(data));
-                            commands.comUploadInitialize(createExtra(data));
-                            interactions.intGetAlarm();
-                        }
-                    }
-                });
-                builder.show();
-            }
-        });
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                final AlertDialog.Builder builder = new AlertDialog.Builder(mainFragment.getActivity());
+//                builder.setCancelable(false);
+//                builder.setTitle("Which day(s):");
+//                boolean[] checkedItems = ((Alarm) alarms.get(position)).getDays();
+//                for (int i = 0; i < checkedItems.length; i++) {
+//                    if (checkedItems[i]) {
+//                        dayFlags = dayFlags + (int) Math.pow(2, i); //exponential
+//                    }
+//                }
+//                builder.setMultiChoiceItems(days, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+//                        if (isChecked) {
+//                            dayFlags = dayFlags + (int) Math.pow(2, which);
+//                        } else {
+//                            dayFlags = dayFlags - (int) Math.pow(2, which);
+//                        }
+//                    }
+//                });
+//                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        if (dayFlags != 0) {
+//                            selectTime();
+//                        } else {
+//                            alarms.set(position, new Alarm(ConstantValues.EMPTY_ALARM));
+//                            String data = createData();
+//                            sendingData.addAll(Encoding.slip(data));
+//                            commands.comUploadInitialize(createExtra(data));
+//                            interactions.intGetAlarm();
+//                        }
+//                    }
+//                });
+//                builder.show();
+//            }
+//        });
     }
 
     /**
@@ -429,23 +429,23 @@ class UploadInteraction extends BluetoothInteraction {
             hours = ((Alarm) alarms.get(position)).getHours();
             minutes = ((Alarm) alarms.get(position)).getMinutes();
         }
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                TimePickerDialog mTimePickerDialog = new TimePickerDialog(mainFragment.getActivity(), new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hour, int minute) {
-                        secondsAfterMidnight = hour * 3600 + minute * 60;
-                        selectRepeat();
-                    }
-                }, hours, minutes, true);
-                mTimePickerDialog.setTitle("Select time:");
-                mTimePickerDialog.setButton(TimePickerDialog.BUTTON_NEGATIVE, "", mTimePickerDialog);
-                mTimePickerDialog.setCancelable(false);
-                mTimePickerDialog.show();
-            }
-        });
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                TimePickerDialog mTimePickerDialog = new TimePickerDialog(mainFragment.getActivity(), new TimePickerDialog.OnTimeSetListener() {
+//                    @Override
+//                    public void onTimeSet(TimePicker view, int hour, int minute) {
+//                        secondsAfterMidnight = hour * 3600 + minute * 60;
+//                        selectRepeat();
+//                    }
+//                }, hours, minutes, true);
+//                mTimePickerDialog.setTitle("Select time:");
+//                mTimePickerDialog.setButton(TimePickerDialog.BUTTON_NEGATIVE, "", mTimePickerDialog);
+//                mTimePickerDialog.setCancelable(false);
+//                mTimePickerDialog.show();
+//            }
+//        });
     }
 
     /**
@@ -453,30 +453,30 @@ class UploadInteraction extends BluetoothInteraction {
      */
     private void selectRepeat() {
         final String[] repeat = new String[]{"Yes", "No"};
-        mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(mainFragment.getActivity());
-                builder.setCancelable(false);
-                builder.setTitle("Repeat the alarm:");
-                builder.setItems(repeat, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) {
-                            dayFlags = dayFlags + 128; //128 = 2^6 = seventh bit
-                        }
-                        alarms.set(position, new Alarm(createAlarm()));
-                        String data = createData();
-                        sendingData.addAll(Encoding.slip(data));
-                        commands.comUploadInitialize(createExtra(data));
-                        interactions.intGetAlarm();
-
-                    }
-                });
-                builder.show();
-            }
-        });
+//        mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                AlertDialog.Builder builder = new AlertDialog.Builder(mainFragment.getActivity());
+//                builder.setCancelable(false);
+//                builder.setTitle("Repeat the alarm:");
+//                builder.setItems(repeat, new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        if (which == 0) {
+//                            dayFlags = dayFlags + 128; //128 = 2^6 = seventh bit
+//                        }
+//                        alarms.set(position, new Alarm(createAlarm()));
+//                        String data = createData();
+//                        sendingData.addAll(Encoding.slip(data));
+//                        commands.comUploadInitialize(createExtra(data));
+//                        interactions.intGetAlarm();
+//
+//                    }
+//                });
+//                builder.show();
+//            }
+//        });
     }
 
 

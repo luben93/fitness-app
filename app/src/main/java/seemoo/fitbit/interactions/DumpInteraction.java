@@ -100,17 +100,17 @@ class DumpInteraction extends BluetoothInteraction {
      */
     boolean isFinished() {
         if (data.length() != 0 && !transmissionActive) {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    TransferProgressEvent dumpProgEvent = new TransferProgressEvent();
-                    dumpProgEvent.setTransferState(TransferProgressEvent.STATE_STOP);
-                    EventBus.getDefault().post(dumpProgEvent);
-                    toast.setText(TAG + " successful.");
-                    toast.show();
-                }
-            });
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    TransferProgressEvent dumpProgEvent = new TransferProgressEvent();
+//                    dumpProgEvent.setTransferState(TransferProgressEvent.STATE_STOP);
+//                    EventBus.getDefault().post(dumpProgEvent);
+//                    toast.setText(TAG + " successful.");
+//                    toast.show();
+//                }
+//            });
             Log.e(TAG, TAG + " successful.");
             return true;
         }
@@ -220,21 +220,21 @@ class DumpInteraction extends BluetoothInteraction {
                 //if we explicitly dump the key, save it
                 if (address == FitbitDevice.MEMORY_KEY) {
                     FitbitDevice.setEncryptionKey(dataList.getData());
-                    InternalStorage.saveString(dataList.getData(), ConstantValues.FILE_ENC_KEY, mainFragment.getActivity());
+                    InternalStorage.saveString(dataList.getData(), ConstantValues.FILE_ENC_KEY, mainFragment.getContext());
                     toast.setText("Encryption Key successfully saved.");
                 }
 
                 toast.show();
             }
         } else {
-            mainFragment.getActivity().runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
+//            mainFragment.getActivity().runOnUiThread(new Runnable() {
+//
+//                @Override
+//                public void run() {
                     toast.setText(name + " failed.");
                     toast.show();
-                }
-            });
+//                }
+//            });
             dataList = null;
             Log.e(TAG, name + " failed.");
         }
@@ -308,7 +308,7 @@ class DumpInteraction extends BluetoothInteraction {
             result.add(new Information("Serial Number: " + Utilities.rotateBytes(productCode)));
             FitbitDevice.setSerialNumber(productCode);
             if (FitbitDevice.NONCE == null) {
-                InternalStorage.loadAuthFiles(mainFragment.getActivity());
+                InternalStorage.loadAuthFiles(mainFragment.getContext());
             }
             result.add(new Information("ID: " + FitbitDevice.getDeviceType()));
             if (!FitbitDevice.ENCRYPTED) {
@@ -321,7 +321,7 @@ class DumpInteraction extends BluetoothInteraction {
             //add plaintext dump info
             if (FitbitDevice.ENCRYPTED && null != FitbitDevice.ENCRYPTION_KEY) {
                 Log.e(TAG, "Encrypted dump found, trying to decrypt...");
-                String plaintextDump =  Crypto.decryptTrackerDump(Utilities.hexStringToByteArray(dataList.getData()), mainFragment.getActivity());
+                String plaintextDump =  Crypto.decryptTrackerDump(Utilities.hexStringToByteArray(dataList.getData()));
                 result = plainDumpProcessing(result, plaintextDump);
             } else if(!FitbitDevice.ENCRYPTED){
                 Log.e(TAG, "Plaintext dump found, processing...");

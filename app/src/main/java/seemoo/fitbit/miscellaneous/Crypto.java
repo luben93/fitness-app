@@ -23,7 +23,7 @@ public class Crypto {
 
     //TODO tracker vs server dump have different headers (with / without serial ID)
     //TODO distinguish between XTEA/AES
-    public static String decryptTrackerDump(byte[] dump, Activity activity) {
+    public static String decryptTrackerDump(byte[] dump) {
 
 
         int headerlength = 16;
