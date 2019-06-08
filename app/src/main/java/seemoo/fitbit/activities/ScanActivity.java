@@ -214,7 +214,7 @@ public class ScanActivity extends RequestPermissionsActivity {
         }
         //added by lucas
         String mac = getIntent().getExtras().getString("macAddress","");
-        if(mac.equals("")) {
+        if(!mac.equals("")) {
             mScanCallback.onScanResult(0, new ScanResult(mBluetoothAdapter.getRemoteDevice(mac), null, 0, 0));
         }
 

@@ -47,6 +47,7 @@ import seemoo.fitbit.information.InformationList;
 import seemoo.fitbit.interactions.Interactions;
 import seemoo.fitbit.miscellaneous.ConstantValues;
 import seemoo.fitbit.miscellaneous.FitbitDevice;
+import seemoo.fitbit.miscellaneous.InfoListItem;
 import seemoo.fitbit.miscellaneous.InternalStorage;
 import seemoo.fitbit.miscellaneous.Utilities;
 import seemoo.fitbit.tasks.Tasks;
@@ -61,30 +62,29 @@ public class WearableController extends Service implements IWearableController {
     private Commands commands;
     private Interactions interactions;
     private Tasks tasks;
-    private InformationList informationToDisplay = new InformationList("");
-    private ListView mListView;
-    private FloatingActionButton clearAlarmsButton;
-    private FloatingActionButton saveButton;
+//    private InformationList informationToDisplay = new InformationList("");
+//    private ListView mListView;
+//    private FloatingActionButton clearAlarmsButton;
+//    private FloatingActionButton saveButton;
 
     private Object interactionData;
     private Toast toast_short;
     private Toast toast_long;
     private int alarmIndex = -1;
     private String currentInformationList;
-//    private int customLength = -1;
+    //    private int customLength = -1;
 //    private String fileName;
     private boolean firstPress = true;
     private AlertDialog connectionLostDialog = null;
-
 
 
     private BluetoothConnectionState bluetoothConnectionState = BluetoothConnectionState.UNKNOWN;
 
     private HashMap<String, InformationList> information = new HashMap<>();
 
-    private GraphView graph;
-    private BarGraphSeries<DataPoint> graphDataSeries;
-    private int graphCounter = 0;
+//    private GraphView graph;
+//    private BarGraphSeries<DataPoint> graphDataSeries;
+//    private int graphCounter = 0;
 
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
@@ -103,7 +103,7 @@ public class WearableController extends Service implements IWearableController {
 //
 //                    @Override
 //                    public void run() {
-                        showConnectionLostDialog();
+                showConnectionLostDialog();
 //                    }
 //                });
                 Log.e(TAG, "Connection lost. Trying to reconnect.");
@@ -155,7 +155,7 @@ public class WearableController extends Service implements IWearableController {
             if (interactions.liveModeActive()) {
                 interactions.setAccelReadoutActive(Utilities.checkLiveModeReadout(characteristic.getValue()));
                 information.put(interactions.getCurrentInteraction(), Utilities.translate(characteristic.getValue()));
-                graphDataSeries = Utilities.updateGraph(characteristic.getValue());
+//                graphDataSeries = Utilities.updateGraph(characteristic.getValue());
 //                getActivity().runOnUiThread(new Runnable() {
 //
 //                    @Override
@@ -173,15 +173,19 @@ public class WearableController extends Service implements IWearableController {
 //                informationToDisplay.override(info, mListView);
 //                saveButton.setVisibility(View.VISIBLE);
                 currentInformationList = "LiveMode";
-                String[] data = info.getList().get(6).toString().split(" ");
-                if (data.length == 2) {
-                    Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
-                    int heartRate = Integer.parseInt(data[1]);
-                    Intent intent = new Intent();
-                    intent.putExtra("heartRate", heartRate);
-                    intent.setAction("HRdata");
-                    getContext().sendBroadcast(intent);
-                    Log.d(TAG, "run: broadcast intent sent:: "+intent.getExtras()+ " "+ heartRate);
+                ArrayList<InfoListItem> infoList = info.getList();
+                if (!infoList.isEmpty()) {
+                    String[] data = infoList.get(6).toString().split(" ");
+
+                    if (data.length == 2) {
+                        Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
+                        int heartRate = Integer.parseInt(data[1]);
+                        Intent intent = new Intent();
+                        intent.putExtra("heartRate", heartRate);
+                        intent.setAction("HRdata");
+                        getContext().sendBroadcast(intent);
+                        Log.d(TAG, "run: broadcast intent sent:: " + intent.getExtras() + " " + heartRate);
+                    }
                 }
             }
             commands.commandFinished();
@@ -221,7 +225,7 @@ public class WearableController extends Service implements IWearableController {
 //
 //                    @Override
 //                    public void run() {
-                        showConnectionLostDialog();
+                showConnectionLostDialog();
 //                    }
 //                });
                 Log.e(TAG, "Disconnected. Trying to reconnect...");
@@ -248,7 +252,7 @@ public class WearableController extends Service implements IWearableController {
 
                     currentInformationList = ((InformationList) interactionData).getName();
                     information.put(currentInformationList, (InformationList) interactionData);
-                    graphDataSeries = Utilities.updateGraph(characteristic.getValue());
+//                    graphDataSeries = Utilities.updateGraph(characteristic.getValue());
 //                    getActivity().runOnUiThread(informationListRunnable(currentInformationList, information, interactionData,
 //                            additionalRawOutputBoolean, additionalAlarmInformationBoolean,
 //                            saveDumpFilesBoolean, informationToDisplay, mListView, saveButton,
@@ -325,34 +329,23 @@ public class WearableController extends Service implements IWearableController {
         }
 
     };
-//    private  Activity activity;
     private final IBinder binder = new LocalBinder();
 
-    public  Service getActivity(){
+    public Service getActivity() {
         return this;
     }
-//    private Resources getResources(){
-//        return getActivity().getResources();
-//    }
-    public Context getContext(){
+
+
+    public Context getContext() {
         return this;
     }
-//    public  String getString(int id){
-//        return getResources().getString(id);
-//    }
-//    private void startActivity(Intent intent){
-//        getActivity().startActivity(intent);
-//    }
-//    public WearableController(Activity activity) {
-//        // Required empty public constructor
-//        this.activity = activity;
-//
-//    }
+
 
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
     }
+
     public class LocalBinder extends Binder {
         WearableController getService() {
             // Return this instance of LocalService so clients can call public methods
@@ -361,7 +354,7 @@ public class WearableController extends Service implements IWearableController {
     }
 
     @Override
-    public void onCreate(){
+    public void onCreate() {
         Log.d(TAG, "onCreate: loop ");
         toast_short = Toast.makeText(this, "", Toast.LENGTH_SHORT);
         toast_long = Toast.makeText(this, "", Toast.LENGTH_LONG);
@@ -370,12 +363,12 @@ public class WearableController extends Service implements IWearableController {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: loop"+intent);
-        if(intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE)== null){
+        Log.d(TAG, "onStartCommand: loop" + intent);
+        if (intent == null || intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE) == null) {
             return START_NOT_STICKY;
         }
 //        View rootFragmentView = inflater.inflate(R.layout.fragment_main, container, false);
-        device = (BluetoothDevice)intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
+        device = (BluetoothDevice) intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
 //        initialize(rootFragmentView);
 
         collectBasicInformation();
@@ -439,16 +432,18 @@ public class WearableController extends Service implements IWearableController {
         Log.d(TAG, "onStartCommand: pre fetcher");
 
         running = true;
-        Thread t = new Thread(){
+        Thread t = new Thread() {
             @Override
             public void run() {
                 super.run();
-                while (running){
+                while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
-                        //todo reconnect if neccesary
-                        Thread.sleep(6000);
+                        showConnectionLostDialog();
+                        Thread.sleep(10000);
                         liveModeFavButton();
+                        Thread.sleep(15000);
+
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -460,8 +455,18 @@ public class WearableController extends Service implements IWearableController {
         return START_STICKY;
     }
 
+    public void liveModeFavButton() {
+        Log.d(TAG, "liveModeFavButton: ");
+        if (!interactions.liveModeActive()) {
+            if (!interactions.getAuthenticated()) {
+                interactions.intAuthentication();
+            }
+            interactions.intLiveModeEnable();
 
+        }
+    }
     private boolean running;
+
     /**
      *
      */
@@ -539,7 +544,7 @@ public class WearableController extends Service implements IWearableController {
 //        InfoArrayAdapter arrayAdapter = new InfoArrayAdapter(getActivity(), informationToDisplay.getList());
 //        mListView = (ListView) rootView.findViewById(R.id.WorkActivityList);
 //        mListView.setAdapter(arrayAdapter);
-      //
+    //
 //        //Accel-Live: initialisation of graph
 //        graph = (GraphView) rootView.findViewById(R.id.graph);
 //        graph.getViewport().setMinX(0);
@@ -574,58 +579,58 @@ public class WearableController extends Service implements IWearableController {
      */
     public void collectBasicInformation() {
 //        if (isAdded()) {
-            if (!firstPress) {
-                saveButton.setVisibility(View.VISIBLE);
-            }
-            InformationList list = new InformationList("basic");
-            currentInformationList = "basic";
-            list.add(new Information("MAC Address: " + device.getAddress()));
-            list.add(new Information("Name: " + device.getName()));
+//        if (!firstPress) {
+//            saveButton.setVisibility(View.VISIBLE);
+//        }
+        InformationList list = new InformationList("basic");
+        currentInformationList = "basic";
+        list.add(new Information("MAC Address: " + device.getAddress()));
+        list.add(new Information("Name: " + device.getName()));
 
-            int type = device.getType();
-            if (type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
-                list.add(new Information(getString(R.string.device_type0)));
-            } else if (type == BluetoothDevice.DEVICE_TYPE_CLASSIC) {
-                list.add(new Information(getString(R.string.device_type1)));
-            } else if (type == BluetoothDevice.DEVICE_TYPE_LE) {
-                list.add(new Information(getString(R.string.device_type2)));
-            } else if (type == BluetoothDevice.DEVICE_TYPE_DUAL) {
-                list.add(new Information(getString(R.string.device_type3)));
-            }
+        int type = device.getType();
+        if (type == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
+            list.add(new Information(getString(R.string.device_type0)));
+        } else if (type == BluetoothDevice.DEVICE_TYPE_CLASSIC) {
+            list.add(new Information(getString(R.string.device_type1)));
+        } else if (type == BluetoothDevice.DEVICE_TYPE_LE) {
+            list.add(new Information(getString(R.string.device_type2)));
+        } else if (type == BluetoothDevice.DEVICE_TYPE_DUAL) {
+            list.add(new Information(getString(R.string.device_type3)));
+        }
 
-            int bondState = device.getBondState();
-            if (bondState == BluetoothDevice.BOND_NONE) {
-                list.add(new Information(getString(R.string.bond_state0)));
-            } else if (bondState == BluetoothDevice.BOND_BONDING) {
-                list.add(new Information(getString(R.string.bond_state1)));
-            } else if (bondState == BluetoothDevice.BOND_BONDED) {
-                list.add(new Information(getString(R.string.bond_state2)));
-            }
-
-
-            InternalStorage.loadAuthFiles(getActivity());
-
-            if (FitbitDevice.AUTHENTICATION_KEY == null || FitbitDevice.AUTHENTICATION_KEY.equals("")) {
-                list.add(new Information(getString(R.string.no_auth_cred)));
-            } else {
-                list.add(new Information("Authentication Key & Nonce: " + FitbitDevice.AUTHENTICATION_KEY + ", " + FitbitDevice.NONCE));
-            }
-
-            if (FitbitDevice.ENCRYPTION_KEY == null || FitbitDevice.ENCRYPTION_KEY.equals("")) {
-                list.add(new Information(getString(R.string.no_enc_key)));
-            } else {
-                list.add(new Information("Encryption Key: " + FitbitDevice.ENCRYPTION_KEY));
-            }
+        int bondState = device.getBondState();
+        if (bondState == BluetoothDevice.BOND_NONE) {
+            list.add(new Information(getString(R.string.bond_state0)));
+        } else if (bondState == BluetoothDevice.BOND_BONDING) {
+            list.add(new Information(getString(R.string.bond_state1)));
+        } else if (bondState == BluetoothDevice.BOND_BONDED) {
+            list.add(new Information(getString(R.string.bond_state2)));
+        }
 
 
-            information.put("basic", list);
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
+        InternalStorage.loadAuthFiles(getActivity());
+
+        if (FitbitDevice.AUTHENTICATION_KEY == null || FitbitDevice.AUTHENTICATION_KEY.equals("")) {
+            list.add(new Information(getString(R.string.no_auth_cred)));
+        } else {
+            list.add(new Information("Authentication Key & Nonce: " + FitbitDevice.AUTHENTICATION_KEY + ", " + FitbitDevice.NONCE));
+        }
+
+        if (FitbitDevice.ENCRYPTION_KEY == null || FitbitDevice.ENCRYPTION_KEY.equals("")) {
+            list.add(new Information(getString(R.string.no_enc_key)));
+        } else {
+            list.add(new Information("Encryption Key: " + FitbitDevice.ENCRYPTION_KEY));
+        }
+
+
+        information.put("basic", list);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
 //                    informationToDisplay.override(information.get("basic"), mListView);
 
-                }
-            }, 300);
+            }
+        }, 300);
 //        }
     }
 
@@ -736,14 +741,14 @@ public class WearableController extends Service implements IWearableController {
 //        });
 //        builder.show();
 //    }
-
-    private void readOutEncKey() {
-        if (!interactions.getAuthenticated()) {
-            interactions.intAuthentication();
-        }
-        interactions.intReadOutMemory(FitbitDevice.MEMORY_KEY, FitbitDevice.MEMORY_KEY_END, "KEY");
-    }
-
+//
+//    private void readOutEncKey() {
+//        if (!interactions.getAuthenticated()) {
+//            interactions.intAuthentication();
+//        }
+//        interactions.intReadOutMemory(FitbitDevice.MEMORY_KEY, FitbitDevice.MEMORY_KEY_END, "KEY");
+//    }
+//
 //    public void setAlarmAndSaveButtonGone() {
 //        if (clearAlarmsButton != null) {
 //            clearAlarmsButton.setVisibility(View.GONE);
@@ -777,17 +782,6 @@ public class WearableController extends Service implements IWearableController {
 //            graph.setVisibility(View.GONE);
 //        }
 //    }
-
-    public void liveModeFavButton() {
-        Log.d(TAG, "liveModeFavButton: ");
-        if (!interactions.liveModeActive()) {
-            if (!interactions.getAuthenticated()) {
-                interactions.intAuthentication();
-            }
-            interactions.intLiveModeEnable();
-
-        }
-  }
 //
 //    public boolean isLiveModeActive() {
 //        return interactions.liveModeActive();
@@ -986,7 +980,7 @@ public class WearableController extends Service implements IWearableController {
     public void setInformationListAsAlreadyUploaded(String name) {
         information.get(name).setAlreadyUploaded(true);
     }
-//
+
 //    /**
 //     * Reads in text from the user.
 //     * Depending on the current situation, the text can be:
@@ -1073,7 +1067,7 @@ public class WearableController extends Service implements IWearableController {
 //    public void fitbitApiKeyEntered(String input) {
 //        ((WorkActivity) getActivity()).getHttpsClient().getUserName(input, interactions);
 //    }
-
+//
 //    public void letDeviceBlink() {
 //        checkFirstButtonPress();
 //        interactions.letDeviceBlink();
@@ -1085,7 +1079,7 @@ public class WearableController extends Service implements IWearableController {
 //        interactions.intAccelReadout();
 //        interactions.setAccelReadoutActive(!interactions.accelReadoutActive());
 //    }
-//
+
     public void setBluetoothConnectionState(BluetoothConnectionState newState) {
         bluetoothConnectionState = newState;
     }
