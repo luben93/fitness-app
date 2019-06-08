@@ -170,8 +170,8 @@ public class WearableController extends Service implements IWearableController {
 //                    }
 //                });
                 InformationList info = information.get(interactions.getCurrentInteraction());
-                informationToDisplay.override(info, mListView);
-                saveButton.setVisibility(View.VISIBLE);
+//                informationToDisplay.override(info, mListView);
+//                saveButton.setVisibility(View.VISIBLE);
                 currentInformationList = "LiveMode";
                 String[] data = info.getList().get(6).toString().split(" ");
                 if (data.length == 2) {
@@ -360,10 +360,20 @@ public class WearableController extends Service implements IWearableController {
         }
     }
 
+    @Override
+    public void onCreate(){
+        Log.d(TAG, "onCreate: loop ");
+        toast_short = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+        toast_long = Toast.makeText(this, "", Toast.LENGTH_LONG);
+
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        Log.d(TAG, "onStartCommand: loop"+intent);
+        if(intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE)== null){
+            return START_NOT_STICKY;
+        }
 //        View rootFragmentView = inflater.inflate(R.layout.fragment_main, container, false);
         device = (BluetoothDevice)intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
 //        initialize(rootFragmentView);
@@ -382,49 +392,51 @@ public class WearableController extends Service implements IWearableController {
 //            }, 3000);
 //        }
 
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//
+//            /**
+//             * {@inheritDoc}
+//             *  Lets the user change an alarm, with the current view shows the alarms.
+//             */
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                if (information.get(ConstantValues.INFORMATION_ALARM) != null && services.size() != 0 && position > 0 && position < 9) {
+//                    InformationList temp = new InformationList("");
+//                    temp.addAll(information.get(ConstantValues.INFORMATION_ALARM));
+//                    for (int i = temp.size() - 1; i >= 0; i--) {
+//                        if (!(temp.get(i) instanceof Alarm)) {
+//                            temp.remove(i);
+//                        }
+//                    }
+//                    interactions.intSetAlarm(position - 1, temp);
+//                }
+//                if (parent.getItemAtPosition(position) instanceof Information) {
+//                    String cellContent = ((Information) parent.getItemAtPosition(position)).getData();
+//                    if (cellContent.equals(getString(R.string.no_enc_key))) {
+//                        readOutEncKey();
+//                    } else if (cellContent.equals(getString(R.string.no_auth_cred))) {
+////                        ((WorkActivity) getActivity()).startFitbitAuthentication();
+//                        throw new RuntimeException("not autheticated");
+//                    }
+//                }
+//
+//            }
+//        });
+//        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int pos, long id) {
+//                String cellContent = ((Information) parent.getItemAtPosition(pos)).getData();
+//                ClipboardManager clipboardManager = (ClipboardManager)
+//                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+//                clipboardManager.setPrimaryClip(ClipData.newPlainText("text", cellContent));
+//                toast_short.setText("Content copied to clipboard");
+//                toast_short.show();
+//
+//                return false;
+//            }
+//        });
 
-            /**
-             * {@inheritDoc}
-             *  Lets the user change an alarm, with the current view shows the alarms.
-             */
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (information.get(ConstantValues.INFORMATION_ALARM) != null && services.size() != 0 && position > 0 && position < 9) {
-                    InformationList temp = new InformationList("");
-                    temp.addAll(information.get(ConstantValues.INFORMATION_ALARM));
-                    for (int i = temp.size() - 1; i >= 0; i--) {
-                        if (!(temp.get(i) instanceof Alarm)) {
-                            temp.remove(i);
-                        }
-                    }
-                    interactions.intSetAlarm(position - 1, temp);
-                }
-                if (parent.getItemAtPosition(position) instanceof Information) {
-                    String cellContent = ((Information) parent.getItemAtPosition(position)).getData();
-                    if (cellContent.equals(getString(R.string.no_enc_key))) {
-                        readOutEncKey();
-                    } else if (cellContent.equals(getString(R.string.no_auth_cred))) {
-//                        ((WorkActivity) getActivity()).startFitbitAuthentication();
-                        throw new RuntimeException("not autheticated");
-                    }
-                }
-
-            }
-        });
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int pos, long id) {
-                String cellContent = ((Information) parent.getItemAtPosition(pos)).getData();
-                ClipboardManager clipboardManager = (ClipboardManager)
-                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("text", cellContent));
-                toast_short.setText("Content copied to clipboard");
-                toast_short.show();
-
-                return false;
-            }
-        });
+        Log.d(TAG, "onStartCommand: pre fetcher");
 
         running = true;
         Thread t = new Thread(){
@@ -433,9 +445,10 @@ public class WearableController extends Service implements IWearableController {
                 super.run();
                 while (running){
                     try {
-                        Log.d(TAG, "run: loop");
+                        Log.d(TAG, "run: loop fetch");
+                        //todo reconnect if neccesary
+                        Thread.sleep(6000);
                         liveModeFavButton();
-                        Thread.sleep(60000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -455,31 +468,32 @@ public class WearableController extends Service implements IWearableController {
     public void showConnectionLostDialog() {
         if (getActivity() != null && bluetoothConnectionState != BluetoothConnectionState.CONNECTED &&
                 bluetoothConnectionState != BluetoothConnectionState.CONNECTING) {
-            if (null == connectionLostDialog) {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setMessage(getString(R.string.connectionLostDialogDescription))
-                        .setTitle(getString(R.string.connectionLostDialogTitle));
-                builder.setCancelable(false);
-                builder.setOnKeyListener(new Dialog.OnKeyListener() {
-                    @Override
-                    public boolean onKey(DialogInterface arg0, int keyCode,
-                                         KeyEvent event) {
-                        if (keyCode == KeyEvent.KEYCODE_BACK) {
-                            InternalStorage.clearLastDevice(getActivity());
-                            if (commands != null) {
-                                commands.close();
-                            }
-                            Intent intent = new Intent(getContext(), MainActivity.class);
-                            startActivity(intent);
-                        }
-                        return true;
-                    }
-                });
-
-                connectionLostDialog = builder.create();
-                connectionLostDialog.show();
-            }
+//            if (null == connectionLostDialog) {
+//
+//                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+//                builder.setMessage(getString(R.string.connectionLostDialogDescription))
+//                        .setTitle(getString(R.string.connectionLostDialogTitle));
+//                builder.setCancelable(false);
+//                builder.setOnKeyListener(new Dialog.OnKeyListener() {
+//                    @Override
+//                    public boolean onKey(DialogInterface arg0, int keyCode,
+//                                         KeyEvent event) {
+//                        if (keyCode == KeyEvent.KEYCODE_BACK) {
+//                            InternalStorage.clearLastDevice(getActivity());
+//                            if (commands != null) {
+//                                commands.close();
+//                            }
+//                            Intent intent = new Intent(getContext(), MainActivity.class);
+//                            startActivity(intent);
+//                        }
+//                        return true;
+//                    }
+//                });
+//
+//                connectionLostDialog = builder.create();
+//                connectionLostDialog.show();
+//            }
             connect();
         }
     }
@@ -525,9 +539,7 @@ public class WearableController extends Service implements IWearableController {
 //        InfoArrayAdapter arrayAdapter = new InfoArrayAdapter(getActivity(), informationToDisplay.getList());
 //        mListView = (ListView) rootView.findViewById(R.id.WorkActivityList);
 //        mListView.setAdapter(arrayAdapter);
-//        toast_short = Toast.makeText(getActivity(), "", Toast.LENGTH_SHORT);
-//        toast_long = Toast.makeText(getActivity(), "", Toast.LENGTH_LONG);
-//
+      //
 //        //Accel-Live: initialisation of graph
 //        graph = (GraphView) rootView.findViewById(R.id.graph);
 //        graph.getViewport().setMinX(0);
@@ -610,7 +622,7 @@ public class WearableController extends Service implements IWearableController {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    informationToDisplay.override(information.get("basic"), mListView);
+//                    informationToDisplay.override(information.get("basic"), mListView);
 
                 }
             }, 300);

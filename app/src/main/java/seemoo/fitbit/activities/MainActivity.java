@@ -63,7 +63,6 @@ public class MainActivity extends RequestPermissionsActivity {
         requestPermissionsLocation();
         enableBluetooth();
         checkLastDeviceIsSet();
-        startService(new Intent(this, GattService.class));
     }
 
     /**

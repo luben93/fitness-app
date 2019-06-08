@@ -66,6 +66,10 @@
             android:name=".HeartRateTransmitter.GattService"
             android:enabled="true"
             android:exported="true"></service>
+        <service android:name=".HeartRateTransmitter.WearableController"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
+
 
 </manifest>

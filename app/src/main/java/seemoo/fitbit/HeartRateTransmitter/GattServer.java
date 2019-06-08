@@ -137,7 +137,7 @@ public class GattServer {
 //        byte[] flags = new byte[1];
 //        byte[] mesurment = ByteBuffer.allocate(1).putInt(heartRate).array();
 //        byte[] all = org.spongycastle.util.Arrays.concatenate(flags,mesurment);
-//        Log.d(TAG, "getExactTime: "+all);
+        Log.d(TAG, "sending heartrate: "+heartRate);
         byte[] manual = new byte[2];
         manual[1] = (byte) heartRate;
         return manual;

@@ -19,6 +19,8 @@ import android.widget.Toast;
 
 import java.io.Serializable;
 
+import seemoo.fitbit.HeartRateTransmitter.GattService;
+import seemoo.fitbit.HeartRateTransmitter.WearableController;
 import seemoo.fitbit.R;
 import seemoo.fitbit.fragments.DirectoryPickerFragment;
 import seemoo.fitbit.dialogs.FirmwareFlashDialog;
@@ -63,11 +65,11 @@ public class WorkActivity extends RequestPermissionsActivity implements Serializ
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_work);
 
-        mainFragment = new MainFragment();
+//        mainFragment = new MainFragment();
 
 //        getSupportFragmentManager().beginTransaction().add(R.id.work_activity_fragment_frame,
 //                mainFragment).commit();
-        switchTooFragment(mainFragment);
+//        switchTooFragment(mainFragment);
 
         requestPermissionsLocation();
 
@@ -86,7 +88,7 @@ public class WorkActivity extends RequestPermissionsActivity implements Serializ
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
                         mainFragment.checkFirstButtonPress();
-                        switchTooFragment(mainFragment);
+//                        switchTooFragment(mainFragment);
                         drawerLayout.closeDrawers();
                         backClosesAppToastShown = false;
 
@@ -138,6 +140,16 @@ public class WorkActivity extends RequestPermissionsActivity implements Serializ
         webViewFragment = new WebViewFragment();
 
         client = new HttpsClient(Toast.makeText(this, "", Toast.LENGTH_SHORT), webViewFragment);
+        startService(new Intent(this, GattService.class));
+        Log.d(TAG, "onCreate: did start gatt sender loop");
+        Bundle b = getIntent().getExtras();
+        if(b != null){
+            Intent intent = new Intent(this, WearableController.class);
+            intent.putExtras(b);
+            startService(intent);
+            Log.d(TAG, "onCreate: did start fitbit listener  loop");
+
+        }
 
     }
 
@@ -153,7 +165,7 @@ public class WorkActivity extends RequestPermissionsActivity implements Serializ
     @Override
     public void onResume(){
         super.onResume();
-        mainFragment.showConnectionLostDialog();
+//        mainFragment.showConnectionLostDialog();
     }
 
     /**
