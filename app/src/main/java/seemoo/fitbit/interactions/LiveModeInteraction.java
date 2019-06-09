@@ -25,7 +25,7 @@ class LiveModeInteraction extends BluetoothInteraction {
         this.commands = commands;
         this.interactions = interactions;
         this.LiveModeCommandType = commandType;
-        setTimer(6000000);
+        setTimer(100000);
     }
 
     /**

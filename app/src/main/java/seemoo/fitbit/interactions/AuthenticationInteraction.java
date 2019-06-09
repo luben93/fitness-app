@@ -57,8 +57,8 @@ class AuthenticationInteraction extends BluetoothInteraction {
 
 //                @Override
 //                public void run() {
-                    toast.setText(TAG + " successful.");
-                    toast.show();
+//                    toast.setText(TAG + " successful.");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, TAG + " successful.");

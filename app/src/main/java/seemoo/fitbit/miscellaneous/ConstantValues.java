@@ -30,7 +30,9 @@ public class ConstantValues {
     public static final String DESCRIPTOR_2_1_1 = "00002902-0000-1000-8000-00805f9b34fb"; //handle 0x0012 <= gilt nur für Flex!
     //used for asking name:
     public static final String CHARACTERISTIC_3_1 = "00002a00-0000-1000-8000-00805f9b34fb"; //handle 0x0003 <= gilt nur für Flex!
-
+//2019-06-09 23:00:23.031 7908-8073/seemoo.fitbit E/WearableController: onCharacteristicRead(): 558dfa01-4fa8-4105-9f02-4eaa93e62980, 00
+//2019-06-09 23:01:43.050 7908-8045/seemoo.fitbit E/WearableController: onCharacteristicRead(): 558dfa01-4fa8-4105-9f02-4eaa93e62980, b373fd5c4b310000b85b96002b0b5c0827004202
+//2019-06-09 23:06:02.376 8484-8514/seemoo.fitbit E/WearableController: onCharacteristicChanged(): adabfb01-6e7d-4601-bda2-bffaa68956ba, d9385d3f47186a4060fe907c4b91a7bad2ee9eb5
 
     //Constant orders:
     public static final String MODE_ON = "0100";

@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.ScanResult;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -152,7 +153,7 @@ public class WearableController extends Service implements IWearableController {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.e(TAG, "onCharacteristicRead(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
-            if (interactions.liveModeActive()) {
+//            if (interactions.liveModeActive()) {
                 interactions.setAccelReadoutActive(Utilities.checkLiveModeReadout(characteristic.getValue()));
                 information.put(interactions.getCurrentInteraction(), Utilities.translate(characteristic.getValue()));
 //                graphDataSeries = Utilities.updateGraph(characteristic.getValue());
@@ -173,24 +174,29 @@ public class WearableController extends Service implements IWearableController {
 //                informationToDisplay.override(info, mListView);
 //                saveButton.setVisibility(View.VISIBLE);
                 currentInformationList = "LiveMode";
-                ArrayList<InfoListItem> infoList = info.getList();
-                if (!infoList.isEmpty()) {
-                    String[] data = infoList.get(6).toString().split(" ");
+                sendHRintent(info);
 
-                    if (data.length == 2) {
-                        Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
-                        int heartRate = Integer.parseInt(data[1]);
-                        Intent intent = new Intent();
-                        intent.putExtra("heartRate", heartRate);
-                        intent.setAction("HRdata");
-                        getContext().sendBroadcast(intent);
-                        Log.d(TAG, "run: broadcast intent sent:: " + intent.getExtras() + " " + heartRate);
-                    }
-                }
-            }
+//            }else{
+//                Log.d(TAG, "onCharacteristicRead: not in live mode");
+//            }
             commands.commandFinished();
         }
 
+        private void sendHRintent(InformationList info){
+            if (info.size() >= 6) {
+                String[] data = info.get(6).toString().split(" ");
+
+                if (data.length == 2) {
+                    Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
+                    int heartRate = Integer.parseInt(data[1]);
+                    Intent intent = new Intent();
+                    intent.putExtra("heartRate", heartRate);
+                    intent.setAction("HRdata");
+                    getContext().sendBroadcast(intent);
+                    Log.d(TAG, "run: broadcast intent sent:: " + intent.getExtras() + " " + heartRate);
+                }
+            }
+        }
         /**
          * {@inheritDoc}
          * Logs a characteristic write and finishes the corresponding command.
@@ -209,8 +215,9 @@ public class WearableController extends Service implements IWearableController {
          */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
-
-            Log.e(TAG, "onCharacteristicChanged(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
+            InformationList infoValue = Utilities.translate(characteristic.getValue());
+            Log.e(TAG, "onCharacteristicChanged(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue())+ " translate "+ infoValue.getData());
+            sendHRintent(infoValue);
 
             if (Utilities.byteArrayToHexString(characteristic.getValue()) == "c01301000") {
                 //Command
@@ -429,8 +436,7 @@ public class WearableController extends Service implements IWearableController {
 //            }
 //        });
 
-        Log.d(TAG, "onStartCommand: pre fetcher");
-
+        interactions.intLiveModeEnable();
         running = true;
         Thread t = new Thread() {
             @Override
@@ -439,10 +445,15 @@ public class WearableController extends Service implements IWearableController {
                 while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
-                        showConnectionLostDialog();
+//                        showConnectionLostDialog();
                         Thread.sleep(10000);
-                        liveModeFavButton();
-                        Thread.sleep(15000);
+//                        liveModeFavButton();
+                        if(!interactions.getAuthenticated()){
+                            interactions.intAuthentication();
+                        }
+                        commands.comLiveModeEnable();
+                        commands.comLiveModeFirstValues();
+//                        Thread.sleep(15000);
 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -473,7 +484,7 @@ public class WearableController extends Service implements IWearableController {
     public void showConnectionLostDialog() {
         if (getActivity() != null && bluetoothConnectionState != BluetoothConnectionState.CONNECTED &&
                 bluetoothConnectionState != BluetoothConnectionState.CONNECTING) {
-
+            Log.d(TAG, "showConnectionLostDialog: is doing connect");
 //            if (null == connectionLostDialog) {
 //
 //                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -568,7 +579,7 @@ public class WearableController extends Service implements IWearableController {
      */
     public void connect() {
         FitbitDevice.setMacAddress(device.getAddress());
-        BluetoothGatt mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), false, mBluetoothGattCallback);
+        BluetoothGatt mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
         commands = new Commands(mBluetoothGatt);
         interactions = new Interactions(this, toast_short, commands);
         tasks = new Tasks(interactions, this);
