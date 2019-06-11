@@ -259,7 +259,8 @@ public class GattServer {
      * to the characteristic.
      */
     public void notifyRegisteredDevices() {
-        if (mRegisteredDevices.isEmpty() || currentHeartrate == 0 || currentHeartrate == lastSentHeartrate) {
+        if (mRegisteredDevices.isEmpty() || currentHeartrate == 0 ) { // || lastSentHeartrate == currentHeartrate
+
             Log.i(TAG, "No subscribers registered");
             return;
         }
