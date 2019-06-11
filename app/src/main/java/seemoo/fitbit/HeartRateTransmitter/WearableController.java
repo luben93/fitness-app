@@ -345,7 +345,7 @@ public class WearableController extends Service implements IWearableController {
     public Service getActivity() {
         return this;
     }
-
+    private long lastHRrecived=0;
 
     public Context getContext() {
         return this;
@@ -373,7 +373,7 @@ public class WearableController extends Service implements IWearableController {
 //    }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(final Intent intent, final int flags, final int startId) {
         Log.d(TAG, "onStartCommand: loop" + intent);
         if (intent == null || intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE) == null) {
             return START_NOT_STICKY;
@@ -450,6 +450,11 @@ public class WearableController extends Service implements IWearableController {
                 while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
+                        if(System.currentTimeMillis() - lastHRrecived < 120000){
+                            running = false;
+                            startService(intent);
+                            stopSelf();
+                        }
                         Thread.sleep(9900);
 //                        liveModeFavButton();
                         showConnectionLostDialog();
