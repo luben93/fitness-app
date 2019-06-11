@@ -3,13 +3,17 @@ package seemoo.fitbit.HeartRateTransmitter;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -378,7 +382,7 @@ public class WearableController extends Service implements IWearableController {
         device = (BluetoothDevice) intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
 //        initialize(rootFragmentView);
 
-        collectBasicInformation();
+//        collectBasicInformation();
         connect();
 
 //        if (getActivity().getIntent().getExtras().getBoolean(WorkActivity.ARG_SHOULD_BLINK, false)) {
@@ -437,6 +441,7 @@ public class WearableController extends Service implements IWearableController {
 //        });
 
         interactions.intLiveModeEnable();
+        interactions.intEmptyInteraction();
         running = true;
         Thread t = new Thread() {
             @Override
@@ -445,14 +450,15 @@ public class WearableController extends Service implements IWearableController {
                 while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
-//                        showConnectionLostDialog();
-                        Thread.sleep(10000);
+                        Thread.sleep(20000);
 //                        liveModeFavButton();
+                        showConnectionLostDialog();
                         if(!interactions.getAuthenticated()){
                             interactions.intAuthentication();
                         }
+
                         commands.comLiveModeEnable();
-                        commands.comLiveModeFirstValues();
+//                        commands.comLiveModeFirstValues();
 //                        Thread.sleep(15000);
 
                     } catch (InterruptedException e) {

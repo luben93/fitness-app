@@ -140,16 +140,6 @@ public class WorkActivity extends RequestPermissionsActivity implements Serializ
         webViewFragment = new WebViewFragment();
 
         client = new HttpsClient(Toast.makeText(this, "", Toast.LENGTH_SHORT), webViewFragment);
-        startService(new Intent(this, GattService.class));
-        Log.d(TAG, "onCreate: did start gatt sender loop");
-        Bundle b = getIntent().getExtras();
-        if(b != null){
-            Intent intent = new Intent(this, WearableController.class);
-            intent.putExtras(b);
-            startService(intent);
-            Log.d(TAG, "onCreate: did start fitbit listener  loop");
-
-        }
 
     }
 

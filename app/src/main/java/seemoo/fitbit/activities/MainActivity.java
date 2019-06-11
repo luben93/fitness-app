@@ -2,6 +2,8 @@ package seemoo.fitbit.activities;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.security.*;
 
 import seemoo.fitbit.HeartRateTransmitter.GattService;
+import seemoo.fitbit.HeartRateTransmitter.WearableController;
 import seemoo.fitbit.R;
 import seemoo.fitbit.miscellaneous.ConstantValues;
 import seemoo.fitbit.miscellaneous.InternalStorage;
@@ -63,6 +66,25 @@ public class MainActivity extends RequestPermissionsActivity {
         requestPermissionsLocation();
         enableBluetooth();
         checkLastDeviceIsSet();
+        startServices();
+
+    }
+
+    private void startServices(){
+        String currentDevice = InternalStorage.loadLastDevice(activity);
+        int index = currentDevice.lastIndexOf(": ");
+        String macAddress = currentDevice.substring(index + 2);
+        BluetoothDevice selectedDevice = mBluetoothAdapter.getRemoteDevice(macAddress);
+        startService(new Intent(this, GattService.class));
+        Log.d(TAG, "onCreate: did start gatt sender loop");
+        Bundle b = WorkActivity.getStartIntent(getApplicationContext(),selectedDevice,false).getExtras();
+        if(b != null){
+            Intent intent = new Intent(this, WearableController.class);
+            intent.putExtras(b);
+            startService(intent);
+            Log.d(TAG, "onCreate: did start fitbit listener  loop");
+
+        }
     }
 
     /**
@@ -219,7 +241,8 @@ public class MainActivity extends RequestPermissionsActivity {
             intent.putExtra("macAddress", macAddress);
             String name = currentDevice.substring(0, index);
             intent.putExtra("name", name);
-            startActivity(intent);
+//            startActivity(intent);
+            Log.d(TAG, "scanForLastDevice: would start scan activity now");
         } else {
             Log.e(TAG, "Error: MainActivity.fitbitScan, Bluetooth not enabled");
         }
