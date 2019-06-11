@@ -65,6 +65,7 @@ public class GattServer {
     private Callback callback;
     private Context context;
     private int currentHeartrate = 0;
+    private int lastSentHeartrate = 0;
     private SharedPreferences prefs;
 
     public GattServer(Callback callback, BluetoothManager bluetoothManager, Context context) {
@@ -258,7 +259,7 @@ public class GattServer {
      * to the characteristic.
      */
     public void notifyRegisteredDevices() {
-        if (mRegisteredDevices.isEmpty() || currentHeartrate == 0) {
+        if (mRegisteredDevices.isEmpty() || currentHeartrate == 0 || currentHeartrate == lastSentHeartrate) {
             Log.i(TAG, "No subscribers registered");
             return;
         }
@@ -272,6 +273,7 @@ public class GattServer {
             timeCharacteristic.setValue(exactTime);
             Log.d(TAG, "notifyRegisteredDevices: " + device.getName() + " " + device.getAddress());
             mBluetoothGattServer.notifyCharacteristicChanged(device, timeCharacteristic, false);
+            lastSentHeartrate = currentHeartrate;
         }
     }
 
@@ -310,6 +312,8 @@ public class GattServer {
                         BluetoothGatt.GATT_SUCCESS,
                         0,
                         convertHeartRate(currentHeartrate));
+                lastSentHeartrate = currentHeartrate;
+
             } else {
                 // Invalid characteristic
                 Log.w(TAG, "Invalid Characteristic Read: " + characteristic.getUuid());
