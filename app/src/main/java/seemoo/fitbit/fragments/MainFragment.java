@@ -509,7 +509,7 @@ public class MainFragment extends Fragment implements IWearableController {
         FitbitDevice.setMacAddress(device.getAddress());
         BluetoothGatt mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), false, mBluetoothGattCallback);
         commands = new Commands(mBluetoothGatt);
-        interactions = new Interactions(this, toast_short, commands);
+        interactions = new Interactions(this, commands);
         tasks = new Tasks(interactions, this);
     }
 

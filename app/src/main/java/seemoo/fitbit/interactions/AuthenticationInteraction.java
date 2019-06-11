@@ -24,7 +24,6 @@ class AuthenticationInteraction extends BluetoothInteraction {
 
     private String acknowledgement;
     private IWearableController mainFragment;
-    private Toast toast;
     private Commands commands;
     private Interactions interactions;
     private int deviceType;
@@ -33,13 +32,11 @@ class AuthenticationInteraction extends BluetoothInteraction {
      * Creates an authentication interaction.
      *
      * @param mainFragment     The current mainFragment.
-     * @param toast        The toast, to send messages to the user.
      * @param commands     The instance of commands.
      * @param interactions The instance of interactions.
      */
-    AuthenticationInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions) {
+    AuthenticationInteraction(IWearableController mainFragment,   Commands commands, Interactions interactions) {
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.interactions = interactions;
         deviceType = getDeviceType();
@@ -71,8 +68,8 @@ class AuthenticationInteraction extends BluetoothInteraction {
 //                public void run() {
                     //Log.e(TAG, "uzpwzpizpzwtpowz");
                     Log.e(TAG, "Error: " + Utilities.getError(acknowledgement));
-                    toast.setText(TAG + " failed.");
-                    toast.show();
+//                    toast.setText(TAG + " failed.");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, TAG + " failed.");
@@ -97,10 +94,10 @@ class AuthenticationInteraction extends BluetoothInteraction {
 //
 //                @Override
 //                public void run() {
-                    toast.setDuration(Toast.LENGTH_LONG);
-                    toast.setText("No serial number. Please get a Micro- or Megadump.");
-                    toast.show();
-                    toast.setDuration(Toast.LENGTH_SHORT);
+//                    toast.setDuration(Toast.LENGTH_LONG);
+//                    toast.setText("No serial number. Please get a Micro- or Megadump.");
+//                    toast.show();
+//                    toast.setDuration(Toast.LENGTH_SHORT);
 //                }
 //            });
             return false;

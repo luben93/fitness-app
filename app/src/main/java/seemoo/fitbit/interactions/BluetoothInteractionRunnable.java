@@ -20,7 +20,6 @@ class BluetoothInteractionRunnable implements Runnable {
     private BluetoothInteractionQueue mBluetoothInteractionQueue;
     private Interactions interactions;
 //    private Context activity;
-    private Toast toast;
 
     /**
      * Creates a bluetooth interaction runnable.
@@ -32,13 +31,12 @@ class BluetoothInteractionRunnable implements Runnable {
      * @param activity                   The current activity.
      * @param toast                      The toast to send messages to the user.
      */
-    BluetoothInteractionRunnable(BluetoothInteraction interaction, Semaphore lock, Interactions interactions, BluetoothInteractionQueue mBluetoothInteractionQueue, Toast toast) {
+    BluetoothInteractionRunnable(BluetoothInteraction interaction, Semaphore lock, Interactions interactions, BluetoothInteractionQueue mBluetoothInteractionQueue ) {
         mBluetoothInteraction = interaction;
         mInteractionLock = lock;
         this.interactions = interactions;
         this.mBluetoothInteractionQueue = mBluetoothInteractionQueue;
 //        this.activity = activity;
-        this.toast = toast;
     }
 
     /**
@@ -81,12 +79,12 @@ class BluetoothInteractionRunnable implements Runnable {
 //                            @Override
 //                            public void run() {
                                 if (mBluetoothInteractionQueue.getFirstBluetoothInteraction() != null) {
-                                    toast.setText("Error: Timeout of " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName().replaceFirst("Interaction", ""));
+//                                    toast.setText("Error: Timeout of " + mBluetoothInteractionQueue.getFirstBluetoothInteraction().getClass().getSimpleName().replaceFirst("Interaction", ""));
 //                                    toast.setText("Error: Timeout FW-Update!");
                                 } else {
-                                    toast.setText("Error: Timeout of last interaction");
+//                                    toast.setText("Error: Timeout of last interaction");
                                 }
-                                toast.show();
+//                                toast.show();
 //                            }
 //                        });
                         interactions.interactionFinished();

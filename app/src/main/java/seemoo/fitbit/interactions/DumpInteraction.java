@@ -39,7 +39,6 @@ import seemoo.fitbit.miscellaneous.Crypto;
 class DumpInteraction extends BluetoothInteraction {
 
     private IWearableController  mainFragment;
-    private Toast toast;
     private Commands commands;
     private int dumpType;
     private String address = null;
@@ -57,14 +56,12 @@ class DumpInteraction extends BluetoothInteraction {
      * Creates a dump interaction for a micro- / megadumps and alarms.
      *
      * @param mainFragment The current mainFragment.
-     * @param toast    The toast, to send messages to the user.
      * @param commands The instance of commands.
      * @param dumpType The dump type. (0 = microdump, 1 = megadump, 2 = alarms, 3 = memory)
      */
-    DumpInteraction(IWearableController  mainFragment, Toast toast, Commands commands, int dumpType) {
+    DumpInteraction(IWearableController  mainFragment , Commands commands, int dumpType) {
 
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.dumpType = dumpType;
         TransferProgressEvent dumpProgEvent = new TransferProgressEvent();
@@ -76,16 +73,14 @@ class DumpInteraction extends BluetoothInteraction {
      * Creates a dump interaction for a memory part.
      *
      * @param mainFragment     The current mainFragment.
-     * @param toast        The toast, to send messages to the user.
      * @param commands     The instance of commands.
      * @param dumpType     The dump type. (0 = microdump, 1 = megadump, 2 = alarms, 3 = memory)
      * @param addressBegin The start address of the memory part.
      * @param addressEnd   The end address of the memory part.
      * @param memoryName   The name of the memory part. (Needed for later identification)
      */
-    DumpInteraction(IWearableController mainFragment, Toast toast, Commands commands, int dumpType, String addressBegin, String addressEnd, String memoryName) {
+    DumpInteraction(IWearableController mainFragment , Commands commands, int dumpType, String addressBegin, String addressEnd, String memoryName) {
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.dumpType = dumpType;
         this.address = addressBegin;
@@ -221,18 +216,18 @@ class DumpInteraction extends BluetoothInteraction {
                 if (address == FitbitDevice.MEMORY_KEY) {
                     FitbitDevice.setEncryptionKey(dataList.getData());
                     InternalStorage.saveString(dataList.getData(), ConstantValues.FILE_ENC_KEY, mainFragment.getContext());
-                    toast.setText("Encryption Key successfully saved.");
+//                    toast.setText("Encryption Key successfully saved.");
                 }
 
-                toast.show();
+//                toast.show();
             }
         } else {
 //            mainFragment.getActivity().runOnUiThread(new Runnable() {
 //
 //                @Override
 //                public void run() {
-                    toast.setText(name + " failed.");
-                    toast.show();
+//                    toast.setText(name + " failed.");
+//                    toast.show();
 //                }
 //            });
             dataList = null;

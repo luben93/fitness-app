@@ -22,7 +22,6 @@ import seemoo.fitbit.miscellaneous.Utilities;
 class SetDateInteraction extends BluetoothInteraction {
 
     private IWearableController mainFragment;
-    private Toast toast;
     private Commands commands;
     private Calendar calendar;
     private boolean result = false;
@@ -31,12 +30,10 @@ class SetDateInteraction extends BluetoothInteraction {
      * Creates an instance of set date interaction.
      *
      * @param mainFragment The current mainFragment.
-     * @param toast    The toast, to send messages to the user.
      * @param commands The instance of commands.
      */
-    SetDateInteraction(IWearableController mainFragment, Toast toast, Commands commands) {
+    SetDateInteraction(IWearableController mainFragment , Commands commands) {
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         calendar = Calendar.getInstance();
     }

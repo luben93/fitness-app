@@ -21,7 +21,6 @@ class BluetoothInteractionQueue {
     private Interactions interactions;
     private Semaphore mInteractionLock;
     private ExecutorService mExecutorService;
-    private Toast toast;
     //FIFO list of interactions which gets automatically executed.
     private ArrayList<BluetoothInteraction> bluetoothInteractions;
 
@@ -31,9 +30,8 @@ class BluetoothInteractionQueue {
      * @param interactions  The instance of interactions.
      * @param toast         The toast, to send messages to the user.
      */
-    BluetoothInteractionQueue(Interactions interactions, Toast toast) {
+    BluetoothInteractionQueue(Interactions interactions) {
         this.interactions = interactions;
-        this.toast = toast;
         mInteractionLock = new Semaphore(1, true);
         mExecutorService = Executors.newSingleThreadExecutor();
         bluetoothInteractions = new ArrayList<>();
@@ -47,7 +45,7 @@ class BluetoothInteractionQueue {
      */
     void addInteraction(BluetoothInteraction interaction) {
         bluetoothInteractions.add(interaction);
-        BluetoothInteractionRunnable runnable = new BluetoothInteractionRunnable(interaction, mInteractionLock, interactions, this, toast);
+        BluetoothInteractionRunnable runnable = new BluetoothInteractionRunnable(interaction, mInteractionLock, interactions, this);
         mExecutorService.execute(runnable);
     }
 

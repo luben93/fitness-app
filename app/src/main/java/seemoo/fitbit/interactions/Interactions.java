@@ -19,7 +19,7 @@ public class Interactions {
     private final String TAG = this.getClass().getSimpleName();
 
     private IWearableController mainFragment;
-    private Toast toast;
+//    private Toast toast;
     private Commands commands;
     private BluetoothInteractionQueue mBluetoothInteractionQueue;
 
@@ -34,14 +34,12 @@ public class Interactions {
      * Creates an intance of interactions.
      *
      * @param mainFragment      The current mainFragment.
-     * @param toast         The toast. to send messages to the user.
      * @param commands      The instance to commands.
      */
-    public Interactions(IWearableController mainFragment, Toast toast, Commands commands) {
+    public Interactions(IWearableController mainFragment, Commands commands) {
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
-        mBluetoothInteractionQueue = new BluetoothInteractionQueue(this, toast);
+        mBluetoothInteractionQueue = new BluetoothInteractionQueue(this);
     }
 
     /**
@@ -196,7 +194,7 @@ public class Interactions {
      */
     public void intMicrodump() {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, toast, commands, 0));
+        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment , commands, 0));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -205,7 +203,7 @@ public class Interactions {
      */
     public void intMegadump() {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, toast, commands, 1));
+        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, commands, 1));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -217,14 +215,14 @@ public class Interactions {
 //            mainFragment.getActivity().runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
-                    toast.setText("GetAlarm is not supported by this device!");
-                    toast.show();
+//                    toast.setText("GetAlarm is not supported by this device!");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, "GetAlarm is not supported by this device!");
         } else {
             intEstablishAirlink();
-            mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, toast, commands, 2));
+            mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, commands, 2));
             mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
         }
     }
@@ -238,7 +236,7 @@ public class Interactions {
      */
     public void intReadOutMemory(String addressBegin, String addressEnd, String memoryName) {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, toast, commands, 3, addressBegin, addressEnd, memoryName));
+        mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, commands, 3, addressBegin, addressEnd, memoryName));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -253,14 +251,14 @@ public class Interactions {
 //            mainFragment.getActivity().runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
-                    toast.setText("SetAlarm is not supported by this device!");
-                    toast.show();
+//                    toast.setText("SetAlarm is not supported by this device!");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, "SetAlarm is not supported by this device!");
         } else {
             intEstablishAirlink();
-            mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, toast, commands, this, position, informationList));
+            mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, commands, this, position, informationList));
             mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
         }
     }
@@ -270,7 +268,7 @@ public class Interactions {
      */
     public void intClearAlarms() {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, toast, commands, this, -1, new InformationList("")));
+        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, commands, this, -1, new InformationList("")));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -282,7 +280,7 @@ public class Interactions {
      */
     public void intUploadFirmwareInteraction(String data, int customLength) {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, toast, commands, this, data, customLength));
+        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, commands, this, data, customLength));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -293,7 +291,7 @@ public class Interactions {
      */
     public void intUploadMicroDumpInteraction(String data) {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, toast, commands, 1, data));
+        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, commands, 1, data));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -304,7 +302,7 @@ public class Interactions {
      */
     public void intUploadMegadumpInteraction(String data) {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, toast, commands, 2, data));
+        mBluetoothInteractionQueue.addInteraction(new UploadInteraction(mainFragment, commands, 2, data));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 
@@ -315,24 +313,24 @@ public class Interactions {
     public void intAuthentication() {
         intEstablishAirlink();
         if (FitbitDevice.SERIAL_NUMBER == null) {
-            mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment, toast, commands, 0));
+            mBluetoothInteractionQueue.addInteraction(new DumpInteraction(mainFragment,  commands, 0));
         }
         if (!authenticated) {
-            mBluetoothInteractionQueue.addInteraction(new AuthenticationInteraction(mainFragment, toast, commands, this));
+            mBluetoothInteractionQueue.addInteraction(new AuthenticationInteraction(mainFragment,  commands, this));
 
             String nonce = FitbitDevice.NONCE;
             String key = FitbitDevice.AUTHENTICATION_KEY;
 
             if (FitbitDevice.NONCE == null) {
 
-                mBluetoothInteractionQueue.addInteraction(new AuthenticationInteraction(mainFragment, toast, commands, this));
+                mBluetoothInteractionQueue.addInteraction(new AuthenticationInteraction(mainFragment,  commands, this));
             }
         } else {
 //            mainFragment.getActivity().runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
-                    toast.setText("Already authenticated.");
-                    toast.show();
+//                    toast.setText("Already authenticated.");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, "Already authenticated.");
@@ -366,7 +364,7 @@ public class Interactions {
      */
     public void intSetDate() {
         intEstablishAirlink();
-        mBluetoothInteractionQueue.addInteraction(new SetDateInteraction(mainFragment, toast, commands));
+        mBluetoothInteractionQueue.addInteraction(new SetDateInteraction(mainFragment,  commands));
         mBluetoothInteractionQueue.addInteraction(new EmptyInteraction(this));
     }
 

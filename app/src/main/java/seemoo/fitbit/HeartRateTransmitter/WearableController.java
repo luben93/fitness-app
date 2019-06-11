@@ -73,14 +73,14 @@ public class WearableController extends Service implements IWearableController {
 //    private FloatingActionButton saveButton;
 
     private Object interactionData;
-    private Toast toast_short;
-    private Toast toast_long;
+//    private Toast toast_short;
+//    private Toast toast_long;
     private int alarmIndex = -1;
     private String currentInformationList;
     //    private int customLength = -1;
 //    private String fileName;
-    private boolean firstPress = true;
-    private AlertDialog connectionLostDialog = null;
+//    private boolean firstPress = true;
+//    private AlertDialog connectionLostDialog = null;
 
 
     private BluetoothConnectionState bluetoothConnectionState = BluetoothConnectionState.UNKNOWN;
@@ -364,13 +364,13 @@ public class WearableController extends Service implements IWearableController {
         }
     }
 
-    @Override
-    public void onCreate() {
-        Log.d(TAG, "onCreate: loop ");
-        toast_short = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        toast_long = Toast.makeText(this, "", Toast.LENGTH_LONG);
-
-    }
+//    @Override
+//    public void onCreate() {
+//        Log.d(TAG, "onCreate: loop ");
+//        toast_short = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+//        toast_long = Toast.makeText(this, "", Toast.LENGTH_LONG);
+//
+//    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -524,10 +524,10 @@ public class WearableController extends Service implements IWearableController {
      * If there is a connectionLostDialog shown, dismiss it to show the user the tracker is connected again.
      */
     public void destroyConnectionLostDialog() {
-        if (null != connectionLostDialog) {
-            connectionLostDialog.dismiss();
-            connectionLostDialog = null;
-        }
+//        if (null != connectionLostDialog) {
+//            connectionLostDialog.dismiss();
+//            connectionLostDialog = null;
+//        }
     }
 
 //    /**
@@ -587,7 +587,7 @@ public class WearableController extends Service implements IWearableController {
         FitbitDevice.setMacAddress(device.getAddress());
         BluetoothGatt mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
         commands = new Commands(mBluetoothGatt);
-        interactions = new Interactions(this, toast_short, commands);
+        interactions = new Interactions(this, commands);
         tasks = new Tasks(interactions, this);
     }
 

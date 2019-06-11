@@ -29,7 +29,6 @@ import seemoo.fitbit.miscellaneous.Encoding;
 class UploadInteraction extends BluetoothInteraction {
 
     private IWearableController  mainFragment;
-    private Toast toast;
     private Commands commands;
     private String dataIn;
     private int type;
@@ -52,14 +51,12 @@ class UploadInteraction extends BluetoothInteraction {
      * Creates an instance of upload interaction for micro- and megadump uploads.
      *
      * @param mainFragment The current MainFragment.
-     * @param toast    The toast, to send messages to the user.
      * @param commands The instance of commands.
      * @param type     The type of the upload. (1 = microdump, 2 = megadump)
      * @param dataIn   The data of the upload.
      */
-    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, int type, String dataIn) { //for micro-/megadumps
+    UploadInteraction(IWearableController mainFragment, Commands commands, int type, String dataIn) { //for micro-/megadumps
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.dataIn = dataIn;
         this.type = type;
@@ -69,15 +66,13 @@ class UploadInteraction extends BluetoothInteraction {
      * Creates an instance of upload interaction for firmware uploads.
      *
      * @param mainFragment     The current MainFragment.
-     * @param toast        The toast, to send messages to the user.
      * @param commands     The instance of commands.
      * @param interactions The instance of interactions.
      * @param dataIn       The data of the upload.
      * @param customLength The length of the data.
      */
-    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions, String dataIn, int customLength) { //for firmware
+    UploadInteraction(IWearableController mainFragment , Commands commands, Interactions interactions, String dataIn, int customLength) { //for firmware
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.interactions = interactions;
         this.dataIn = dataIn;
@@ -89,15 +84,13 @@ class UploadInteraction extends BluetoothInteraction {
      * Creates an instance of upload interaction for alarm uploads.
      *
      * @param mainFragment     The current MainFragment.
-     * @param toast        The toast, to send messages to the user.
      * @param commands     The instance of commands.
      * @param interactions The instance of interactions.
      * @param position     The position of the alarm in the alarm list to upload.
      * @param alarms       The alarms to upload.
      */
-    UploadInteraction(IWearableController mainFragment, Toast toast, Commands commands, Interactions interactions, int position, InformationList alarms) { //for alarms
+    UploadInteraction(IWearableController mainFragment , Commands commands, Interactions interactions, int position, InformationList alarms) { //for alarms
         this.mainFragment = mainFragment;
-        this.toast = toast;
         this.commands = commands;
         this.position = position;
         type = 3;
@@ -132,8 +125,8 @@ class UploadInteraction extends BluetoothInteraction {
 //
 //                        @Override
 //                        public void run() {
-                            toast.setText("Error: No data to upload.");
-                            toast.show();
+//                            toast.setText("Error: No data to upload.");
+//                            toast.show();
 //                        }
 //                    });
                     failure = true;
@@ -290,8 +283,8 @@ class UploadInteraction extends BluetoothInteraction {
 //
 //                @Override
 //                public void run() {
-                    toast.setText("Upload to device successful.");
-                    toast.show();
+//                    toast.setText("Upload to device successful.");
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, "Upload to device successful.");
@@ -299,8 +292,8 @@ class UploadInteraction extends BluetoothInteraction {
 //            mainFragment.getActivity().runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
-                    toast.setText("Error: Upload to device unsuccessful."); //FIXME also appears for successful firmware update
-                    toast.show();
+//                    toast.setText("Error: Upload to device unsuccessful."); //FIXME also appears for successful firmware update
+//                    toast.show();
 //                }
 //            });
             Log.e(TAG, "Error: Upload to device unsuccessful.");
