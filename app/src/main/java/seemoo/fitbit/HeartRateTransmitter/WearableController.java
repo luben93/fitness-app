@@ -450,7 +450,7 @@ public class WearableController extends Service implements IWearableController {
                 while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
-                        Thread.sleep(20000);
+                        Thread.sleep(99000);
 //                        liveModeFavButton();
                         showConnectionLostDialog();
                         if(!interactions.getAuthenticated()){
