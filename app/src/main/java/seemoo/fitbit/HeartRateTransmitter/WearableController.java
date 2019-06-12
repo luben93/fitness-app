@@ -317,15 +317,17 @@ public class WearableController extends Service implements IWearableController {
                         if(System.currentTimeMillis() - lastHRrecived < 60000){
                             running = false;
                             Log.d(TAG, "run: restarting service too long between updates");
-                            startService(intent);
+                            stopService(intent);
                             stopSelf();
+                            startService(intent);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                         running = false;
                         Log.d(TAG, "run: restarting service exception caught");
-                        startService(intent);
+                        stopService(intent);
                         stopSelf();
+                        startService(intent);
                     }
                 }
             }
