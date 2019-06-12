@@ -38,7 +38,6 @@ import android.content.SharedPreferences;
 import android.os.ParcelUuid;
 import android.util.Log;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,14 +61,14 @@ public class GattServer {
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     /* Collection of notification subscribers */
     private Set<BluetoothDevice> mRegisteredDevices = new HashSet<>();
-    private Callback callback;
+//    private Callback callback;
     private Context context;
     private int currentHeartrate = 0;
     private int lastSentHeartrate = 0;
     private SharedPreferences prefs;
 
-    public GattServer(Callback callback, BluetoothManager bluetoothManager, Context context) {
-        this.callback = callback;
+    public GattServer( BluetoothManager bluetoothManager, Context context) {
+//        this.callback = callback;
         this.mBluetoothManager = bluetoothManager;
         this.context = context;
         IntentFilter filter = new IntentFilter();
@@ -79,26 +78,10 @@ public class GattServer {
         context.registerReceiver(HRreceiver, filter);
     }
 
-    interface Callback {
-        void update(long timestamp);
+
+    public void setCurrentHeartrate(int currentHeartrate) {
+        this.currentHeartrate = currentHeartrate;
     }
-
-
-    /**
-     * Listens for system time changes and triggers a notification to
-     * Bluetooth subscribers.
-     */
-    public BroadcastReceiver mTimeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive: time recived");
-
-            long now = System.currentTimeMillis();
-            Log.d(TAG, "onReceive: time is: " + now);
-            notifyRegisteredDevices();
-            updateLocalUi(now);
-        }
-    };
 
     /**
      * Listens for Bluetooth adapter events to enable/disable
@@ -135,10 +118,7 @@ public class GattServer {
     };
 
     private byte[] convertHeartRate(int heartRate) {
-//        byte[] flags = new byte[1];
-//        byte[] mesurment = ByteBuffer.allocate(1).putInt(heartRate).array();
-//        byte[] all = org.spongycastle.util.Arrays.concatenate(flags,mesurment);
-        Log.d(TAG, "sending heartrate: "+heartRate);
+        Log.d(TAG, "converting heartrate: "+heartRate);
         byte[] manual = new byte[2];
         manual[1] = (byte) heartRate;
         return manual;
@@ -202,9 +182,6 @@ public class GattServer {
         }
 
         mBluetoothGattServer.addService(createHeartRateService());
-
-        // Initialize the local UI
-        updateLocalUi(System.currentTimeMillis());
     }
 
     /**
@@ -261,7 +238,7 @@ public class GattServer {
     public void notifyRegisteredDevices() {
         if (mRegisteredDevices.isEmpty() || currentHeartrate == 0 ) { // || lastSentHeartrate == currentHeartrate
 
-            Log.i(TAG, "No subscribers registered");
+            Log.i(TAG, "No subscribers registered or nothing to send");
             return;
         }
         byte[] exactTime = convertHeartRate(currentHeartrate);
@@ -278,12 +255,6 @@ public class GattServer {
         }
     }
 
-    /**
-     * Update graphical UI on devices that support it with the current time.
-     */
-    private void updateLocalUi(long timestamp) {
-        callback.update(timestamp);
-    }
 
     /**
      * Callback to handle incoming requests to the GATT server.

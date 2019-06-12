@@ -2,7 +2,6 @@ package seemoo.fitbit.activities;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
@@ -23,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.security.*;
 
-import seemoo.fitbit.HeartRateTransmitter.GattService;
 import seemoo.fitbit.HeartRateTransmitter.WearableController;
 import seemoo.fitbit.R;
 import seemoo.fitbit.miscellaneous.ConstantValues;
@@ -75,7 +73,7 @@ public class MainActivity extends RequestPermissionsActivity {
         int index = currentDevice.lastIndexOf(": ");
         String macAddress = currentDevice.substring(index + 2);
         BluetoothDevice selectedDevice = mBluetoothAdapter.getRemoteDevice(macAddress);
-        startService(new Intent(this, GattService.class));
+//        startService(new Intent(this, GattService.class));
         Log.d(TAG, "onCreate: did start gatt sender loop");
         Bundle b = WorkActivity.getStartIntent(getApplicationContext(),selectedDevice,false).getExtras();
         if(b != null){

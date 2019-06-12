@@ -19,8 +19,6 @@ import android.widget.Toast;
 
 import java.io.Serializable;
 
-import seemoo.fitbit.HeartRateTransmitter.GattService;
-import seemoo.fitbit.HeartRateTransmitter.WearableController;
 import seemoo.fitbit.R;
 import seemoo.fitbit.fragments.DirectoryPickerFragment;
 import seemoo.fitbit.dialogs.FirmwareFlashDialog;

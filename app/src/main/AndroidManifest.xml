@@ -50,22 +50,7 @@
             android:label="Scanning for devices..."
             android:parentActivityName=".activities.MainActivity"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".HeartRateTransmitter.GattActivity"
-            android:label="broadcaster"
-            android:parentActivityName=".activities.MainActivity"
-            android:screenOrientation="portrait">
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.MAIN" />-->
 
-                <!--<category android:name="android.intent.category.LAUNCHER" />-->
-            <!--</intent-filter>-->
-        </activity>
-
-        <service
-            android:name=".HeartRateTransmitter.GattService"
-            android:enabled="true"
-            android:exported="true"></service>
         <service android:name=".HeartRateTransmitter.WearableController"
             android:enabled="true"
             android:exported="true"></service>

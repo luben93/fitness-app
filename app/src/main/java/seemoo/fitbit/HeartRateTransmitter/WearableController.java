@@ -20,6 +20,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -60,36 +61,25 @@ import seemoo.fitbit.tasks.Tasks;
 public class WearableController extends Service implements IWearableController {
 
     private final String TAG = this.getClass().getSimpleName();
+    private final IBinder binder = new LocalBinder();
+    private BluetoothManager mBluetoothManager;
+    private long lastHRrecived=0;
+    private GattServer server;
+    private boolean running;
 
     private BluetoothDevice device;
     private ArrayList<BluetoothGattService> services = new ArrayList<>();
-
     private Commands commands;
     private Interactions interactions;
     private Tasks tasks;
-//    private InformationList informationToDisplay = new InformationList("");
-//    private ListView mListView;
-//    private FloatingActionButton clearAlarmsButton;
-//    private FloatingActionButton saveButton;
 
     private Object interactionData;
 //    private Toast toast_short;
 //    private Toast toast_long;
     private int alarmIndex = -1;
     private String currentInformationList;
-    //    private int customLength = -1;
-//    private String fileName;
-//    private boolean firstPress = true;
-//    private AlertDialog connectionLostDialog = null;
-
-
     private BluetoothConnectionState bluetoothConnectionState = BluetoothConnectionState.UNKNOWN;
-
     private HashMap<String, InformationList> information = new HashMap<>();
-
-//    private GraphView graph;
-//    private BarGraphSeries<DataPoint> graphDataSeries;
-//    private int graphCounter = 0;
 
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
@@ -104,13 +94,7 @@ public class WearableController extends Service implements IWearableController {
                 bluetoothConnectionState = BluetoothConnectionState.DISCONNECTED;
                 services.clear();
                 commands.close();
-//                getActivity().runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
                 showConnectionLostDialog();
-//                    }
-//                });
                 Log.e(TAG, "Connection lost. Trying to reconnect.");
             } else if (newState == BluetoothProfile.STATE_CONNECTING) {
                 bluetoothConnectionState = BluetoothConnectionState.CONNECTING;
@@ -138,14 +122,6 @@ public class WearableController extends Service implements IWearableController {
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             Log.e(TAG, "onServicesDiscovered");
             services.addAll(gatt.getServices());
-//            getActivity().runOnUiThread(new Runnable() {
-//
-//                @Override
-//                public void run() {
-//                    toast_short.setText(R.string.connection_established);
-//                    toast_short.show();
-//                }
-//            });
             commands.commandFinished();
         }
 
@@ -157,47 +133,28 @@ public class WearableController extends Service implements IWearableController {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.e(TAG, "onCharacteristicRead(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
-//            if (interactions.liveModeActive()) {
                 interactions.setAccelReadoutActive(Utilities.checkLiveModeReadout(characteristic.getValue()));
                 information.put(interactions.getCurrentInteraction(), Utilities.translate(characteristic.getValue()));
-//                graphDataSeries = Utilities.updateGraph(characteristic.getValue());
-//                getActivity().runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        if (interactions.accelReadoutActive() && interactions.liveModeActive()) {
-//                            graph.setVisibility(View.VISIBLE);
-//                            graph.removeAllSeries();
-//                            graph.addSeries(graphDataSeries);
-//                        } else {
-//                            graph.setVisibility(View.GONE);
-//                        }
-//                    }
-//                });
                 InformationList info = information.get(interactions.getCurrentInteraction());
-//                informationToDisplay.override(info, mListView);
-//                saveButton.setVisibility(View.VISIBLE);
                 currentInformationList = "LiveMode";
                 sendHRintent(info);
-
-//            }else{
-//                Log.d(TAG, "onCharacteristicRead: not in live mode");
-//            }
-            commands.commandFinished();
+                commands.commandFinished();
         }
 
         private void sendHRintent(InformationList info){
-            if (info.size() >= 6) {
+            if (info.size() > 6) {
                 String[] data = info.get(6).toString().split(" ");
 
                 if (data.length == 2) {
-                    Log.d(TAG, "run: onCharacteristicRead livemode HR " + data[1]);
+                    Log.d(TAG, "run: sendHRintent livemode HR " + data[1]);
                     int heartRate = Integer.parseInt(data[1]);
-                    Intent intent = new Intent();
-                    intent.putExtra("heartRate", heartRate);
-                    intent.setAction("HRdata");
-                    getContext().sendBroadcast(intent);
-                    Log.d(TAG, "run: broadcast intent sent:: " + intent.getExtras() + " " + heartRate);
+//                    Intent intent = new Intent();
+//                    intent.putExtra("heartRate", heartRate);
+//                    intent.setAction("HRdata");
+//                    getContext().sendBroadcast(intent);
+                    server.setCurrentHeartrate(heartRate);
+                    server.notifyRegisteredDevices();
+                    Log.d(TAG, "run: broadcast intent sent:: " + " " + heartRate);
                 }
             }
         }
@@ -232,13 +189,7 @@ public class WearableController extends Service implements IWearableController {
                 Log.e(TAG, "Error: " + Utilities.getError(Utilities.byteArrayToHexString(characteristic.getValue())));
                 services.clear();
                 commands.close();
-//                getActivity().runOnUiThread(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
                 showConnectionLostDialog();
-//                    }
-//                });
                 Log.e(TAG, "Disconnected. Trying to reconnect...");
             } else {
                 Log.e(TAG, "Getting interaction response.");
@@ -250,74 +201,12 @@ public class WearableController extends Service implements IWearableController {
                     interactionData = interactions.interactionFinished();
                 }
                 if (interactionData != null) {
-
-//                    String keyAdditionalRawOutput = getResources().getString(R.string.settings_workactivity_1);
-//                    String keyAdditionalAlarmInformation = getResources().getString(R.string.settings_workactivity_2);
-//                    String keySaveDumpFiles = getResources().getString(R.string.settings_workactivity_3);
-//                    final SharedPreferences spAdditionalRawOutput = getActivity().getSharedPreferences(keyAdditionalRawOutput, MODE_PRIVATE);
-//                    final SharedPreferences spAdditionalAlarmInformation = getActivity().getSharedPreferences(keyAdditionalAlarmInformation, MODE_PRIVATE);
-//                    final SharedPreferences spSaveDumpFiles = getActivity().getSharedPreferences(keySaveDumpFiles, MODE_PRIVATE);
-//                    final Boolean additionalRawOutputBoolean = spAdditionalRawOutput.getBoolean(keyAdditionalRawOutput, false);
-//                    final Boolean additionalAlarmInformationBoolean = spAdditionalAlarmInformation.getBoolean(keyAdditionalAlarmInformation, false);
-//                    final Boolean saveDumpFilesBoolean = spSaveDumpFiles.getBoolean(keySaveDumpFiles, false);
-
                     currentInformationList = ((InformationList) interactionData).getName();
                     information.put(currentInformationList, (InformationList) interactionData);
-//                    graphDataSeries = Utilities.updateGraph(characteristic.getValue());
-//                    getActivity().runOnUiThread(informationListRunnable(currentInformationList, information, interactionData,
-//                            additionalRawOutputBoolean, additionalAlarmInformationBoolean,
-//                            saveDumpFilesBoolean, informationToDisplay, mListView, saveButton,
-//                            clearAlarmsButton, characteristic.getValue()));
                 }
             }
         }
 
-//        private Runnable informationListRunnable(final String currentInformationListRun, final HashMap<String, InformationList> informationRun,
-//                                                 final Object interactionDataRun, final Boolean additionalRawOutputBooleanRun, final Boolean additionalAlarmInformationBooleanRun,
-//                                                 final Boolean saveDumpFilesBooleanRun, final InformationList informationToDisplayRun,
-//                                                 final ListView mListViewRun, final FloatingActionButton saveButtonRun,
-//                                                 final FloatingActionButton clearAlarmsButtonRun, final byte[] characteristicValue) {
-//            Runnable runnable = new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (Utilities.checkLiveModeReadout(characteristicValue) == false) {
-//                        graph.setVisibility(View.GONE);
-//                    }
-//                    if ((graphCounter % 30) == 0) {
-//                        graph.removeAllSeries();
-//                        graph.addSeries(graphDataSeries);
-//                    }
-//                    graphCounter++;
-//                    InformationList temp = new InformationList("");
-//                    temp.addAll(informationRun.get(((InformationList) interactionDataRun).getName()));
-//                    if (saveDumpFilesBooleanRun) {
-//                        ExternalStorage.saveInformationList(informationRun.get(currentInformationListRun), currentInformationListRun, getActivity());
-//                    }
-//                    if (currentInformationListRun.equals("Memory_KEY")) {
-//                        FitbitDevice.setEncryptionKey(informationRun.get(currentInformationListRun).getBeautyData().trim());
-//                        Log.e(TAG, "Encryption Key: " + FitbitDevice.ENCRYPTION_KEY);
-//                        InternalStorage.saveString(FitbitDevice.ENCRYPTION_KEY, ConstantValues.FILE_ENC_KEY, getActivity());
-//                    }
-//                    final int positionRawOutput = temp.getPosition(new Information(ConstantValues.RAW_OUTPUT));
-//                    if (!additionalRawOutputBooleanRun && positionRawOutput > 0) {
-//                        temp.remove(positionRawOutput - 1, temp.size());
-//                    }
-//                    final int positionAdditionalInfo = temp.getPosition(new Information(ConstantValues.ADDITIONAL_INFO));
-//                    if (!additionalAlarmInformationBooleanRun && positionAdditionalInfo > 0) {
-//                        temp.remove(positionAdditionalInfo - 1, positionRawOutput - 1);
-//                    }
-//                    informationToDisplayRun.override(temp, mListViewRun);
-//                    if (mListViewRun.getVisibility() == View.VISIBLE) {
-//                        saveButtonRun.setVisibility(View.VISIBLE);
-//                    }
-//                    if (informationToDisplayRun.size() > 1 && informationToDisplayRun.get(1) instanceof Alarm) {
-//                        clearAlarmsButtonRun.setVisibility(View.VISIBLE);
-//                    }
-//                }
-//            };
-//
-//            return runnable;
-//        }
 
         /**
          * {@inheritDoc}
@@ -340,12 +229,10 @@ public class WearableController extends Service implements IWearableController {
         }
 
     };
-    private final IBinder binder = new LocalBinder();
 
     public Service getActivity() {
         return this;
     }
-    private long lastHRrecived=0;
 
     public Context getContext() {
         return this;
@@ -364,13 +251,27 @@ public class WearableController extends Service implements IWearableController {
         }
     }
 
-//    @Override
-//    public void onCreate() {
-//        Log.d(TAG, "onCreate: loop ");
+    @Override
+    public void onCreate() {
+        Log.d(TAG, "onCreate: loop ");
 //        toast_short = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 //        toast_long = Toast.makeText(this, "", Toast.LENGTH_LONG);
-//
-//    }
+        mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
+
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        server = new GattServer(mBluetoothManager,this);
+        registerReceiver(server.mBluetoothReceiver, filter);
+        if (!bluetoothAdapter.isEnabled()) {
+            Log.d(TAG, "Bluetooth is currently disabled...enabling");
+            bluetoothAdapter.enable();
+        } else {
+            Log.d(TAG, "Bluetooth enabled...starting services");
+
+            server.startAdvertising();
+            server.startServer();
+        }
+    }
 
     @Override
     public int onStartCommand(final Intent intent, final int flags, final int startId) {
@@ -378,103 +279,72 @@ public class WearableController extends Service implements IWearableController {
         if (intent == null || intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE) == null) {
             return START_NOT_STICKY;
         }
-//        View rootFragmentView = inflater.inflate(R.layout.fragment_main, container, false);
         device = (BluetoothDevice) intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
-//        initialize(rootFragmentView);
 
 //        collectBasicInformation();
         connect();
 
-//        if (getActivity().getIntent().getExtras().getBoolean(WorkActivity.ARG_SHOULD_BLINK, false)) {
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    letDeviceBlink();
-//                    toast_short.setText("Connection to new tracker. Will blink");
-//                    toast_short.show();
-//                }
-//            }, 3000);
-//        }
-
-//        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//
-//            /**
-//             * {@inheritDoc}
-//             *  Lets the user change an alarm, with the current view shows the alarms.
-//             */
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                if (information.get(ConstantValues.INFORMATION_ALARM) != null && services.size() != 0 && position > 0 && position < 9) {
-//                    InformationList temp = new InformationList("");
-//                    temp.addAll(information.get(ConstantValues.INFORMATION_ALARM));
-//                    for (int i = temp.size() - 1; i >= 0; i--) {
-//                        if (!(temp.get(i) instanceof Alarm)) {
-//                            temp.remove(i);
-//                        }
-//                    }
-//                    interactions.intSetAlarm(position - 1, temp);
-//                }
-//                if (parent.getItemAtPosition(position) instanceof Information) {
-//                    String cellContent = ((Information) parent.getItemAtPosition(position)).getData();
-//                    if (cellContent.equals(getString(R.string.no_enc_key))) {
-//                        readOutEncKey();
-//                    } else if (cellContent.equals(getString(R.string.no_auth_cred))) {
-////                        ((WorkActivity) getActivity()).startFitbitAuthentication();
-//                        throw new RuntimeException("not autheticated");
-//                    }
-//                }
-//
-//            }
-//        });
-//        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int pos, long id) {
-//                String cellContent = ((Information) parent.getItemAtPosition(pos)).getData();
-//                ClipboardManager clipboardManager = (ClipboardManager)
-//                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-//                clipboardManager.setPrimaryClip(ClipData.newPlainText("text", cellContent));
-//                toast_short.setText("Content copied to clipboard");
-//                toast_short.show();
-//
-//                return false;
-//            }
-//        });
-
-        interactions.intLiveModeEnable();
-        interactions.intEmptyInteraction();
         running = true;
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        //todo need to close this service
         Thread t = new Thread() {
             @Override
             public void run() {
                 super.run();
+                connect();
+                commands.comLiveModeFirstValues();
+
                 while (running) {
                     try {
                         Log.d(TAG, "run: loop fetch");
-                        if(System.currentTimeMillis() - lastHRrecived < 120000){
-                            running = false;
-                            startService(intent);
-                            stopSelf();
-                        }
-                        Thread.sleep(9900);
+
+                        Thread.sleep(10000);
 //                        liveModeFavButton();
                         showConnectionLostDialog();
                         if(!interactions.getAuthenticated()){
                             interactions.intAuthentication();
                         }
-
+                        //register notify from wearable
                         commands.comLiveModeEnable();
-//                        commands.comLiveModeFirstValues();
+                        commands.comLiveModeFirstValues();
 //                        Thread.sleep(15000);
 
-                    } catch (InterruptedException e) {
+                        //send to client
+                        Log.d(TAG, "run: loop");
+                        server.notifyRegisteredDevices();
+
+
+                        if(System.currentTimeMillis() - lastHRrecived < 60000){
+                            running = false;
+                            Log.d(TAG, "run: restarting service too long between updates");
+                            startService(intent);
+                            stopSelf();
+                        }
+                    } catch (Exception e) {
                         e.printStackTrace();
+                        running = false;
+                        Log.d(TAG, "run: restarting service exception caught");
+                        startService(intent);
+                        stopSelf();
                     }
                 }
             }
         };
 
         t.start();
-        return START_STICKY;
+        return START_REDELIVER_INTENT;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
+        if (bluetoothAdapter.isEnabled()) {
+            server.stopServer();
+            server.stopAdvertising();
+        }
+        running = false;
+        unregisterReceiver(server.mBluetoothReceiver);
     }
 
     public void liveModeFavButton() {
@@ -487,7 +357,6 @@ public class WearableController extends Service implements IWearableController {
 
         }
     }
-    private boolean running;
 
     /**
      *
@@ -496,31 +365,6 @@ public class WearableController extends Service implements IWearableController {
         if (getActivity() != null && bluetoothConnectionState != BluetoothConnectionState.CONNECTED &&
                 bluetoothConnectionState != BluetoothConnectionState.CONNECTING) {
             Log.d(TAG, "showConnectionLostDialog: is doing connect");
-//            if (null == connectionLostDialog) {
-//
-//                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//                builder.setMessage(getString(R.string.connectionLostDialogDescription))
-//                        .setTitle(getString(R.string.connectionLostDialogTitle));
-//                builder.setCancelable(false);
-//                builder.setOnKeyListener(new Dialog.OnKeyListener() {
-//                    @Override
-//                    public boolean onKey(DialogInterface arg0, int keyCode,
-//                                         KeyEvent event) {
-//                        if (keyCode == KeyEvent.KEYCODE_BACK) {
-//                            InternalStorage.clearLastDevice(getActivity());
-//                            if (commands != null) {
-//                                commands.close();
-//                            }
-//                            Intent intent = new Intent(getContext(), MainActivity.class);
-//                            startActivity(intent);
-//                        }
-//                        return true;
-//                    }
-//                });
-//
-//                connectionLostDialog = builder.create();
-//                connectionLostDialog.show();
-//            }
             connect();
         }
     }
@@ -529,60 +373,8 @@ public class WearableController extends Service implements IWearableController {
      * If there is a connectionLostDialog shown, dismiss it to show the user the tracker is connected again.
      */
     public void destroyConnectionLostDialog() {
-//        if (null != connectionLostDialog) {
-//            connectionLostDialog.dismiss();
-//            connectionLostDialog = null;
-//        }
+        Log.i(TAG, "destroyConnectionLostDialog: ");
     }
-
-//    /**
-//     * Initializes several objects.
-//     */
-//    private void initialize(View rootView) {
-//        clearAlarmsButton = (FloatingActionButton) rootView.findViewById(R.id.fragment_main_clear_alarms_button);
-//        clearAlarmsButton.setVisibility(View.GONE);
-//        clearAlarmsButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                clearAlarmsButton(v);
-//            }
-//        });
-//
-//        saveButton = (FloatingActionButton) rootView.findViewById(R.id.fragment_main_save_button);
-//        saveButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                saveButton(v);
-//            }
-//        });
-//        saveButton.setVisibility(View.GONE);
-//        FloatingActionButton updateButton = (FloatingActionButton) rootView.findViewById(R.id.fragment_main_update_live_view);
-//        updateButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                liveModeFavButton(v);
-//            }
-//        });
-//        InfoArrayAdapter arrayAdapter = new InfoArrayAdapter(getActivity(), informationToDisplay.getList());
-//        mListView = (ListView) rootView.findViewById(R.id.WorkActivityList);
-//        mListView.setAdapter(arrayAdapter);
-    //
-//        //Accel-Live: initialisation of graph
-//        graph = (GraphView) rootView.findViewById(R.id.graph);
-//        graph.getViewport().setMinX(0);
-//        graph.getViewport().setMaxX(2);
-//        graph.getViewport().setMinY(-8500);
-//        graph.getViewport().setMaxY(8500);
-//        graph.getViewport().setYAxisBoundsManual(true);
-//        graph.getViewport().setXAxisBoundsManual(true);
-//        graph.setTitle("Gravitational force on accelerometer");
-//        graph.setVisibility(View.GONE);
-//        graph.getGridLabelRenderer().setVerticalAxisTitle("Value");
-//        graph.getGridLabelRenderer().setHorizontalAxisTitle("Axis");
-//        StaticLabelsFormatter staticLabelsFormatter = new StaticLabelsFormatter(graph);
-//        staticLabelsFormatter.setHorizontalLabels(new String[]{" ", "x", "y", "z", " "});
-//        graph.getGridLabelRenderer().setLabelFormatter(staticLabelsFormatter);
-//    }
 
 
     /**
@@ -594,16 +386,14 @@ public class WearableController extends Service implements IWearableController {
         commands = new Commands(mBluetoothGatt);
         interactions = new Interactions(this, commands);
         tasks = new Tasks(interactions, this);
+        interactions.intLiveModeEnable();
+//        interactions.intEmptyInteraction();
     }
 
     /**
      * Collects basic information about the selected device, stores them in 'information' and displays them to the user.
      */
     public void collectBasicInformation() {
-//        if (isAdded()) {
-//        if (!firstPress) {
-//            saveButton.setVisibility(View.VISIBLE);
-//        }
         InformationList list = new InformationList("basic");
         currentInformationList = "basic";
         list.add(new Information("MAC Address: " + device.getAddress()));
@@ -649,299 +439,11 @@ public class WearableController extends Service implements IWearableController {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-//                    informationToDisplay.override(information.get("basic"), mListView);
 
             }
         }, 300);
-//        }
     }
 
-//    public void checkFirstButtonPress() {
-//        if (firstPress) {
-//            tasks.taskStartup(interactions, (WorkActivity) getActivity());
-//            firstPress = false;
-//        }
-//    }
-
-//    /**
-//     * Gets called, when the 'dump' button is pressed.
-//     * Lets the user device, which dump to get from the device:
-//     * - microdump.
-//     * - megadump.
-//     * - flash memory: start.
-//     * - flash memory: BSL.
-//     * - flash memory: APP.
-//     * - EEPROM.
-//     * - SRAM.
-//     * Authenticates with the device if needed.
-//     */
-//    public void buttonDump() {
-//        checkFirstButtonPress();
-//        setAlarmAndSaveButtonGone();
-//        final String[] items = new String[]{"Microdump", "Megadump", "Key", "Flash: start", "Flash: BSL", "Flash: APP", "Flash: all", "EEPROM", "SRAM", "Console Printf"};
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setTitle("Choose a dump type:");
-//        builder.setItems(items, new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                ((WorkActivity) getActivity()).setDumpMenuButtonActive();
-//                switch (which) {
-//                    case 0:
-//                        new TransferProgressDialog(getContext(), "Microdump", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intMicrodump();
-//                        break;
-//                    case 1:
-//                        new TransferProgressDialog(getContext(), "Megadump", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intMegadump();
-//                        break;
-//                    case 2:
-//                        readOutEncKey();
-//                        break;
-//                    case 3:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "Flash: start", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_START, FitbitDevice.MEMORY_BSL, "START");
-//                        break;
-//                    case 4:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "Flash: BSL", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_BSL, FitbitDevice.MEMORY_APP, "BSL");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                    case 5:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "Flash: APP", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_APP, FitbitDevice.MEMORY_APP_END, "APP");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                    case 6:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "Flash: all", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_START, FitbitDevice.MEMORY_APP_END, "APP");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                    case 7:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "EEPROM", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_EEPROM, FitbitDevice.MEMORY_EEPROM_END, "EEPROM");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                    case 8:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "SRAM", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_SRAM, FitbitDevice.MEMORY_SRAM_END, "SRAM");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                    case 9:
-//                        if (!interactions.getAuthenticated()) {
-//                            interactions.intAuthentication();
-//                        }
-//                        new TransferProgressDialog(getActivity(), "Console Printf", TransferProgressDialog.TRANSFER_TRACKER_TO_APP).show();
-//                        interactions.intReadOutMemory(FitbitDevice.MEMORY_CONSOLE, FitbitDevice.MEMORY_CONSOLE_END, "CONSOLE");
-//                        toast_long.setText(getString(R.string.time));
-//                        toast_long.show();
-//                        break;
-//                }
-//            }
-//        });
-//        builder.show();
-//    }
-//
-//    private void readOutEncKey() {
-//        if (!interactions.getAuthenticated()) {
-//            interactions.intAuthentication();
-//        }
-//        interactions.intReadOutMemory(FitbitDevice.MEMORY_KEY, FitbitDevice.MEMORY_KEY_END, "KEY");
-//    }
-//
-//    public void setAlarmAndSaveButtonGone() {
-//        if (clearAlarmsButton != null) {
-//            clearAlarmsButton.setVisibility(View.GONE);
-//        }
-//        if (saveButton != null) {
-//            saveButton.setVisibility(View.GONE);
-//        }
-//    }
-
-//    /**
-//     * Gets called, when 'set date' button is pressed.
-//     * Lets the user set the date of the device.
-//     */
-//    public void buttonSetDate() {
-//        checkFirstButtonPress();
-//        interactions.intSetDate();
-//    }
-//
-//    /**
-//     * Gets called, when the 'live mode' button is pressed.
-//     * Depending on the current state, it switches to live mode or back to normal mode.
-//     */
-//    public void buttonLiveMode() {
-//        setAlarmAndSaveButtonGone();
-//        graph.setVisibility(View.GONE);
-//        if (!interactions.liveModeActive()) {
-//            if (!interactions.getAuthenticated()) {
-//                interactions.intAuthentication();
-//            }
-//            interactions.intLiveModeEnable();
-//            graph.setVisibility(View.GONE);
-//        }
-//    }
-//
-//    public boolean isLiveModeActive() {
-//        return interactions.liveModeActive();
-//    }
-//
-//    public void endLiveMode() {
-//        graph.setVisibility(View.GONE);
-//        interactions.intLiveModeDisable();
-//    }
-//
-//    /**
-//     * Gets called, when 'alarms' button is pressed.
-//     * Does an authentication, if necessary, collects the alarms from the device and shows them to the user.
-//     */
-//    public void buttonAlarms() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setMessage("Getting alarms from device. Alarms are editable by tapping on them.");
-//        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int which) {
-//                if (!interactions.getAuthenticated()) {
-//                    interactions.intAuthentication();
-//                }
-//                interactions.intGetAlarm();
-//            }
-//        });
-//        builder.show();
-//
-//    }
-//
-//    /**
-//     * Gets called, when the 'information' button is pressed.
-//     * Collects basic information form the device.
-//     */
-//    public void buttonCollectBasicInformation() {
-//        checkFirstButtonPress();
-//        setAlarmAndSaveButtonGone();
-//        collectBasicInformation();
-//    }
-//
-//    public void buttonDevices() {
-//        InternalStorage.clearLastDevice(getActivity());
-//        if (commands != null) {
-//            commands.close();
-//        }
-//        Intent intent = new Intent(getContext(), MainActivity.class);
-//        startActivity(intent);
-//
-//    }
-//
-//    public void flashFirmware(String fileName, boolean isAppFirmware) {
-//        //TODO GUI freezes before showing this toast (which should inform user...). Freeze should not happen anyway
-//        toast_short.setText("prepare flashing ...");
-//        toast_short.show();
-//
-//        //FIXME actually authentication is not required for FW update, but otherwise encryption key variable is empty
-//        //if (!interactions.getAuthenticated()) {
-//        //    interactions.intAuthentication();
-//        //}
-//
-//        String type = "";
-//        String plain = "";
-//
-//        //flashing positions
-//        //int flashbase = Utilities.hexStringToInt(FitbitDevice.MEMORY_START);
-//        //int bslpos = Utilities.hexStringToInt(FitbitDevice.MEMORY_BSL);
-//        //int apppos = Utilities.hexStringToInt(FitbitDevice.MEMORY_APP);
-//
-//        //flash APP
-//        if (isAppFirmware) {
-//            if (FitbitDevice.DEVICE_TYPE == 0x07) {
-//                plain = Firmware.generateFirmwareFrame(fileName, 0xa000, 0xa000 + 0x026020, Utilities.hexStringToInt(FitbitDevice.MEMORY_APP), false, getActivity());
-//            } else {
-//                plain = Firmware.generateFirmwareFrame(fileName, 0x9c00, 0x9c00 + 0x048c50, Utilities.hexStringToInt(FitbitDevice.MEMORY_APP), false, getActivity());// charge hr
-//            }
-//            //TODO make this non-hw specific
-//            type = "app";
-//        }
-//        //flash BSL
-//        else {
-//
-//            if (FitbitDevice.DEVICE_TYPE == 0x07) {
-//                plain = Firmware.generateFirmwareFrame(fileName, 0x0200, 0x0200 + 0x009e00, Utilities.hexStringToInt(FitbitDevice.MEMORY_BSL), true, getActivity());
-//            } else {
-//                plain = Firmware.generateFirmwareFrame(fileName, 0x0200, 0x0200 + 0x009800, Utilities.hexStringToInt(FitbitDevice.MEMORY_BSL), true, getActivity()); //charge hr
-//                //plain = Firmware.generateFirmwareFrame(fileName, (bslpos-flashbase), (bslpos-flashbase) + (apppos-flashbase), bslpos , true, getActivity()); //RF_ERR_RX_PACKET_NOT_HANDLED
-//            }
-//            type = "bsl";
-//        }
-//
-//        ExternalStorage.saveString(plain, "fwplain", getActivity()); //just for debugging...
-//
-//        String fw = plain;
-//        if (FitbitDevice.ENCRYPTED) {
-//            try {
-//                fw = Crypto.encryptDump(Utilities.hexStringToByteArray(plain), getActivity());
-//            } catch (Exception e) {
-//                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//                builder.setMessage("Encrypting dump failed.");
-//            }
-//        }
-//
-//        interactions.intUploadFirmwareInteraction(fw, fw.length());
-//    }
-
-//    /**
-//     * Gets called, when clear alarms button is pressed.
-//     *
-//     * @param view The current view.
-//     */
-//    public void clearAlarmsButton(View view) {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setMessage("Erasing all alarms.");
-//        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int which) {
-//                if (!interactions.getAuthenticated()) {
-//                    interactions.intAuthentication();
-//                }
-//                interactions.intClearAlarms();
-//                interactions.intGetAlarm();
-//            }
-//        });
-//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int which) {
-//            }
-//        });
-//        builder.show();
-//    }
-
-//    /**
-//     * Gets called, when save button is pressed.
-//     *
-//     * @param view The current view.
-//     */
-//    public void saveButton(View view) {
-////        ExternalStorage.saveInformationList(information.get(currentInformationList), currentInformationList, getActivity());
-////        toast_short.setText("Information saved.");
-////        toast_short.show();
-//    }
 
     /**
      * Returns alarmIndex and increments it value by one afterwards
@@ -1003,104 +505,6 @@ public class WearableController extends Service implements IWearableController {
         information.get(name).setAlreadyUploaded(true);
     }
 
-//    /**
-//     * Reads in text from the user.
-//     * Depending on the current situation, the text can be:
-//     * - the external directory to store / load files.
-//     * - the name of a firmware to upload.
-//     * - the length of a firmware to upload.
-//     * - the PIN of an online authentication.
-//     */
-//    public void updatewithbsl() {
-//        if (!interactions.getAuthenticated()) {
-//            interactions.intAuthentication();
-//        }
-//
-//        String fw = "";
-//
-//        /*try {
-//            //fw = Crypto.decrypttest_reboot_bsl_standalone(activity);
-//            fw = Crypto.encryptedFwUpdate(activity);
-//
-//        }catch (UnsupportedEncodingException e) {
-//
-//        }*/
-//
-//        //interactions.intUploadFirmwareInteraction(fw, fw.length());
-//
-//        //interactions.intUploadFirmwareInteraction(ExternalStorage.loadString(fileName, activity), customLength);
-//    }
-//
-//    public void bootToBSL() {
-//        if (!interactions.getAuthenticated()) {
-//            interactions.intAuthentication();
-//        }
-//
-//        String command = "";
-//        command = Firmware.rebootToBSL(getActivity());
-//
-//
-//        interactions.intUploadFirmwareInteraction(command, command.length());
-//
-//        //interactions.intUploadFirmwareInteraction(ExternalStorage.loadString(fileName, activity), customLength);*/
-//    }
-//
-//    public void bootToApp() {
-//        if (!interactions.getAuthenticated()) {
-//            interactions.intAuthentication();
-//        }
-//
-//        String command = "";
-//        /*try {
-//            //fw = Crypto.decrypttest_reboot_bsl_standalone(activity);
-//            fw = Crypto.decrypttest_reboot_app_standalone(activity);
-//
-//        }catch (UnsupportedEncodingException e) {
-//
-//        }
-//
-//        interactions.intUploadFirmwareInteraction(fw, fw.length());
-//
-//        //interactions.intUploadFirmwareInteraction(ExternalStorage.loadString(fileName, activity), customLength);*/
-//    }
-//
-//
-//    /**
-//     * {@inheritDoc}
-//     * Closes bluetooth gatt and clears history.
-//     */
-////    @Override
-//    public void onPause() {
-////        super.onPause();
-//        WorkActivity workActivity = (WorkActivity) getActivity();
-//        if (workActivity != null && workActivity.isBluetoothDisconnectOnPause()) {
-//            tasks.clearList();
-//            interactions.disconnectBluetooth();
-//        }
-//        toast_short.cancel();
-//        toast_long.cancel();
-//    }
-//
-//
-//    public void buttonLocalAuthenticate() {
-//        interactions.intAuthentication();
-//    }
-//
-//    public void fitbitApiKeyEntered(String input) {
-//        ((WorkActivity) getActivity()).getHttpsClient().getUserName(input, interactions);
-//    }
-//
-//    public void letDeviceBlink() {
-//        checkFirstButtonPress();
-//        interactions.letDeviceBlink();
-//    }
-//
-//    public void buttonSwitchLiveMode() {
-//        toast_long.setText("Switch Live Mode output");
-//        toast_long.show();
-//        interactions.intAccelReadout();
-//        interactions.setAccelReadoutActive(!interactions.accelReadoutActive());
-//    }
 
     public void setBluetoothConnectionState(BluetoothConnectionState newState) {
         bluetoothConnectionState = newState;
