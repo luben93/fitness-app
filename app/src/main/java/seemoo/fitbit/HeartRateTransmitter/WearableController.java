@@ -67,6 +67,7 @@ public class WearableController extends Service implements IWearableController {
     private GattServer server;
     private boolean running;
 
+    private BluetoothGatt mBluetoothGatt;
     private BluetoothDevice device;
     private ArrayList<BluetoothGattService> services = new ArrayList<>();
     private Commands commands;
@@ -94,7 +95,7 @@ public class WearableController extends Service implements IWearableController {
                 bluetoothConnectionState = BluetoothConnectionState.DISCONNECTED;
                 services.clear();
                 commands.close();
-                showConnectionLostDialog();
+//                showConnectionLostDialog();
                 Log.e(TAG, "Connection lost. Trying to reconnect.");
             } else if (newState == BluetoothProfile.STATE_CONNECTING) {
                 bluetoothConnectionState = BluetoothConnectionState.CONNECTING;
@@ -176,10 +177,13 @@ public class WearableController extends Service implements IWearableController {
          */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
-            InformationList infoValue = Utilities.translate(characteristic.getValue());
-            Log.e(TAG, "onCharacteristicChanged(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue())+ " translate "+ infoValue.getData());
-            sendHRintent(infoValue);
+            Log.e(TAG, "onCharacteristicChanged(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
 
+            if(characteristic.getUuid().toString().equals( "558dfa01-4fa8-4105-9f02-4eaa93e62980")){
+                InformationList infoValue = Utilities.translate(characteristic.getValue());
+                sendHRintent(infoValue);
+                return;
+            }
             if (Utilities.byteArrayToHexString(characteristic.getValue()) == "c01301000") {
                 //Command
                 Log.e(TAG, "Error: " + Utilities.getError(Utilities.byteArrayToHexString(characteristic.getValue())));
@@ -189,7 +193,7 @@ public class WearableController extends Service implements IWearableController {
                 Log.e(TAG, "Error: " + Utilities.getError(Utilities.byteArrayToHexString(characteristic.getValue())));
                 services.clear();
                 commands.close();
-                showConnectionLostDialog();
+//                showConnectionLostDialog();
                 Log.e(TAG, "Disconnected. Trying to reconnect...");
             } else {
                 Log.e(TAG, "Getting interaction response.");
@@ -282,7 +286,6 @@ public class WearableController extends Service implements IWearableController {
         device = (BluetoothDevice) intent.getExtras().get(WorkActivity.ARG_EXTRA_DEVICE);
 
 //        collectBasicInformation();
-        connect();
 
         running = true;
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
@@ -342,11 +345,14 @@ public class WearableController extends Service implements IWearableController {
         super.onDestroy();
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
         if (bluetoothAdapter.isEnabled()) {
+            mBluetoothGatt.disconnect();
+            mBluetoothGatt.close();
             server.stopServer();
             server.stopAdvertising();
         }
         running = false;
         unregisterReceiver(server.mBluetoothReceiver);
+
     }
 
     public void liveModeFavButton() {
@@ -384,7 +390,7 @@ public class WearableController extends Service implements IWearableController {
      */
     public void connect() {
         FitbitDevice.setMacAddress(device.getAddress());
-        BluetoothGatt mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
+         mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
         commands = new Commands(mBluetoothGatt);
         interactions = new Interactions(this, commands);
         tasks = new Tasks(interactions, this);
