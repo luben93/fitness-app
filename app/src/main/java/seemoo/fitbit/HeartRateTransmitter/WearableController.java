@@ -63,7 +63,7 @@ public class WearableController extends Service implements IWearableController {
     private final String TAG = this.getClass().getSimpleName();
     private final IBinder binder = new LocalBinder();
     private BluetoothManager mBluetoothManager;
-    private long lastHRrecived=0;
+    private long lastHRrecived = 0;
     private GattServer server;
     private boolean running;
 
@@ -75,7 +75,7 @@ public class WearableController extends Service implements IWearableController {
     private Tasks tasks;
 
     private Object interactionData;
-//    private Toast toast_short;
+    //    private Toast toast_short;
 //    private Toast toast_long;
     private int alarmIndex = -1;
     private String currentInformationList;
@@ -134,15 +134,15 @@ public class WearableController extends Service implements IWearableController {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.e(TAG, "onCharacteristicRead(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
-                interactions.setAccelReadoutActive(Utilities.checkLiveModeReadout(characteristic.getValue()));
-                information.put(interactions.getCurrentInteraction(), Utilities.translate(characteristic.getValue()));
-                InformationList info = information.get(interactions.getCurrentInteraction());
-                currentInformationList = "LiveMode";
-                sendHRintent(info);
-                commands.commandFinished();
+            interactions.setAccelReadoutActive(Utilities.checkLiveModeReadout(characteristic.getValue()));
+            information.put(interactions.getCurrentInteraction(), Utilities.translate(characteristic.getValue()));
+            InformationList info = information.get(interactions.getCurrentInteraction());
+            currentInformationList = "LiveMode";
+            sendHRintent(info);
+            commands.commandFinished();
         }
 
-        private void sendHRintent(InformationList info){
+        private void sendHRintent(InformationList info) {
             if (info.size() > 6) {
                 String[] data = info.get(6).toString().split(" ");
 
@@ -153,12 +153,16 @@ public class WearableController extends Service implements IWearableController {
 //                    intent.putExtra("heartRate", heartRate);
 //                    intent.setAction("HRdata");
 //                    getContext().sendBroadcast(intent);
+                    if(heartRate == 0){
+                        connect();
+                    }
                     server.setCurrentHeartrate(heartRate);
                     server.notifyRegisteredDevices();
                     Log.d(TAG, "run: broadcast intent sent:: " + " " + heartRate);
                 }
             }
         }
+
         /**
          * {@inheritDoc}
          * Logs a characteristic write and finishes the corresponding command.
@@ -179,7 +183,7 @@ public class WearableController extends Service implements IWearableController {
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
             Log.e(TAG, "onCharacteristicChanged(): " + characteristic.getUuid() + ", " + Utilities.byteArrayToHexString(characteristic.getValue()));
 
-            if(characteristic.getUuid().toString().equals( "558dfa01-4fa8-4105-9f02-4eaa93e62980")){
+            if (characteristic.getUuid().toString().equals("558dfa01-4fa8-4105-9f02-4eaa93e62980")) {
                 InformationList infoValue = Utilities.translate(characteristic.getValue());
                 sendHRintent(infoValue);
                 return;
@@ -264,7 +268,7 @@ public class WearableController extends Service implements IWearableController {
         BluetoothAdapter bluetoothAdapter = mBluetoothManager.getAdapter();
 
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        server = new GattServer(mBluetoothManager,this);
+        server = new GattServer(mBluetoothManager, this);
         registerReceiver(server.mBluetoothReceiver, filter);
         if (!bluetoothAdapter.isEnabled()) {
             Log.d(TAG, "Bluetooth is currently disabled...enabling");
@@ -304,7 +308,7 @@ public class WearableController extends Service implements IWearableController {
                         Thread.sleep(10000);
 //                        liveModeFavButton();
                         showConnectionLostDialog();
-                        if(!interactions.getAuthenticated()){
+                        if (!interactions.getAuthenticated()) {
                             interactions.intAuthentication();
                         }
                         //register notify from wearable
@@ -317,7 +321,7 @@ public class WearableController extends Service implements IWearableController {
                         server.notifyRegisteredDevices();
 
 
-                        if(System.currentTimeMillis() - lastHRrecived < 60000){
+                        if (System.currentTimeMillis() - lastHRrecived < 60000) {
                             running = false;
                             Log.d(TAG, "run: restarting service too long between updates");
                             stopService(intent);
@@ -390,7 +394,7 @@ public class WearableController extends Service implements IWearableController {
      */
     public void connect() {
         FitbitDevice.setMacAddress(device.getAddress());
-         mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
+        mBluetoothGatt = device.connectGatt(getActivity().getBaseContext(), true, mBluetoothGattCallback);
         commands = new Commands(mBluetoothGatt);
         interactions = new Interactions(this, commands);
         tasks = new Tasks(interactions, this);
